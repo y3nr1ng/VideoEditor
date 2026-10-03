@@ -56,6 +56,7 @@ import {
   acceptsDrop,
   waitForMedia,
 } from "./drop";
+import { CropPreview } from "./CropPreview";
 import { HoverDelete } from "./HoverDelete";
 import { LibraryDropRegion } from "./LibraryDropRegion";
 import { SourceEditor } from "./SourceEditor";
@@ -877,6 +878,7 @@ function App() {
                     </span>
                     {r.kind === "video" && (
                       <button
+                        className="resource-crop-button"
                         title="Crop before adding"
                         aria-label={`Crop ${r.name}`}
                         disabled={busy}
@@ -885,7 +887,8 @@ function App() {
                           openCrop(r);
                         }}
                       >
-                        <IconCrop size={15} />
+                        <IconCrop size={18} />
+                        {libraryView === "details" && <span>Crop</span>}
                       </button>
                     )}
                   </div>
@@ -1763,25 +1766,8 @@ function App() {
                 <IconX size={20} />
               </button>
             </div>
-            <div
-              className="crop-stage"
-              style={{
-                aspectRatio: `${cropRes.width}/${cropRes.height}`,
-                width: `min(100%, ${(350 * cropRes.width) / cropRes.height}px)`,
-              }}
-            >
-              <video
-                key={cropRes.id}
-                src={cropRes.url}
-                poster={cropRes.thumb}
-                aria-label="Crop preview"
-                preload="auto"
-                muted
-                playsInline
-                onLoadedData={(e) => {
-                  e.currentTarget.currentTime = Math.min(0.1, cropRes.duration / 2);
-                }}
-              />
+            <CropPreview key={cropRes.id} url={cropRes.url} poster={cropRes.thumb}
+              duration={cropRes.duration} width={cropRes.width} height={cropRes.height}>
               <div
                 className="crop-box"
                 style={{
@@ -1840,7 +1826,7 @@ function App() {
                   }}
                 />
               </div>
-            </div>
+            </CropPreview>
             <div className="crop-fields">
               {(["x", "y", "w", "h"] as const).map((key) => (
                 <label key={key}>
@@ -1888,11 +1874,11 @@ function App() {
                   );
                   setCropTarget(null);
                   notify(
-                    "Crop saved. Add this resource to the timeline to use it.",
+                    "Crop applied to new clips.",
                   );
                 }}
               >
-                <IconCheck size={16} /> Save crop
+                <IconCheck size={16} /> Apply crop
               </button>
             </div>
           </section>

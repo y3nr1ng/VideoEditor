@@ -2235,3 +2235,12 @@ body,
   stroke-width: 0.65;
   vector-effect: non-scaling-stroke;
 }
+
+.library-view-details .resource-card { grid-template-columns: 100px minmax(0, 1fr) auto; position: relative; }
+.library-view-details .resource-meta { display: contents; }
+.library-view-details .resource-meta > span { grid-column: 2; font-size: 10px; }
+.library-view-details .resource-crop-button { grid-column: 3; grid-row: 1 / span 3; display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 12px; background: #293443; border: 1px solid #46556a; color: #dae6f3; font-size: 12px; }
+.crop-transport { margin: 12px 0; }
+.crop-transport input { width: 100%; }
+.crop-playback { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.crop-playback span { font-size: 11px; color: #aab9cc; font-variant-numeric: tabular-nums; }
