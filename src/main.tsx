@@ -89,6 +89,7 @@ function App() {
     [zoomY, setZoomY] = useState(50),
     [cropTarget, setCropTarget] = useState<string | null>(null),
     [draftCrop, setDraftCrop] = useState<Crop>(fullCrop),
+    [cropUnit, setCropUnit] = useState<"percent" | "pixel">("percent"),
     [exportOpen, setExportOpen] = useState(false),
     [format, setFormat] = useState<Format>("mp4"),
     [size, setSize] = useState(1280),
@@ -1740,8 +1741,7 @@ function App() {
           >
             <div className="modal-heading">
               <div>
-                <h2 id="crop-title">Crop your resource</h2>
-                <p>Choose the area to keep before adding it to the timeline.</p>
+                <h2 id="crop-title">Crop the resource</h2>
               </div>
               <button
                 className="icon-button"
@@ -1752,7 +1752,7 @@ function App() {
               </button>
             </div>
             <CropPreview key={cropRes.id} url={cropRes.url} poster={cropRes.thumb}
-              duration={cropRes.duration} width={cropRes.width} height={cropRes.height}>
+              duration={cropRes.duration} width={cropRes.width} height={cropRes.height} crop={draftCrop}>
               <div
                 className="crop-box"
                 style={{
@@ -1802,42 +1802,33 @@ function App() {
               </div>
             </CropPreview>
             <div className="crop-fields">
-              {(["x", "y", "w", "h"] as const).map((key) => (
-                <label key={key}>
-                  {{ x: "Left", y: "Top", w: "Width", h: "Height" }[key]}
-                  <input
-                    type="number"
-                    min={key === "w" || key === "h" ? 5 : 0}
-                    max="100"
-                    value={+draftCrop[key].toFixed(1)}
-                    onChange={(e) =>
-                      setDraftCrop((p) => {
-                        const value = +e.target.value;
-                        if (key === "x")
-                          return { ...p, x: clamp(value, 0, 100 - p.w) };
-                        if (key === "y")
-                          return { ...p, y: clamp(value, 0, 100 - p.h) };
-                        if (key === "w")
-                          return { ...p, w: clamp(value, 5, 100 - p.x) };
-                        return { ...p, h: clamp(value, 5, 100 - p.y) };
-                      })
-                    }
-                  />{" "}
-                  %
-                </label>
+              {([ ["x", "y"], ["w", "h"] ] as const).map((keys, i) => (
+                <div className="crop-field-group" key={i}>
+                  {keys.map((key) => {
+                    const factor = cropUnit === "pixel" ? (key === "x" || key === "w" ? cropRes.width : cropRes.height) / 100 : 1;
+                    return <label key={key}>
+                      {{ x: "Left", y: "Top", w: "Width", h: "Height" }[key]}
+                      <input type="number" step={cropUnit === "pixel" ? 1 : 0.1}
+                        min={(key === "w" || key === "h" ? 5 : 0) * factor}
+                        max={100 * factor}
+                        value={cropUnit === "pixel" ? Math.round(draftCrop[key] * factor) : +draftCrop[key].toFixed(1)}
+                        onChange={(e) => setDraftCrop((p) => {
+                          const value = +e.target.value / factor;
+                          if (key === "x") return { ...p, x: clamp(value, 0, 100 - p.w) };
+                          if (key === "y") return { ...p, y: clamp(value, 0, 100 - p.h) };
+                          if (key === "w") return { ...p, w: clamp(value, 5, 100 - p.x) };
+                          return { ...p, h: clamp(value, 5, 100 - p.y) };
+                        })} />
+                    </label>;
+                  })}
+                </div>
               ))}
+              <div className="crop-unit-toggle" role="group" aria-label="Crop units">
+                <button aria-pressed={cropUnit === "percent"} onClick={() => setCropUnit("percent")}>%</button>
+                <button aria-pressed={cropUnit === "pixel"} onClick={() => setCropUnit("pixel")}>px</button>
+              </div>
             </div>
-            <p className="modal-note">
-              Drag the frame to move it; drag an edge or corner handle to resize.
-              Existing timeline clips keep their crop.
-            </p>
             <div className="modal-footer">
-              <button
-                className="small-button"
-                onClick={() => setDraftCrop({ ...fullCrop })}
-              >
-                Reset crop
-              </button>
               <button
                 className="primary"
                 onClick={() => {

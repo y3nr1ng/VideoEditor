@@ -23,3 +23,15 @@ it("seeks and controls the source video with exactly three transport buttons", (
   fireEvent.click(screen.getByLabelText("Pause crop preview"));
   expect(pause).toHaveBeenCalledTimes(3);
 });
+it("bounds wheel zoom between the full source and a crop that fits the viewport", () => {
+  const { container, rerender } = render(<CropPreview url="blob:source" duration={10} width={1280} height={720} crop={{ x: 25, y: 25, w: 50, h: 50 }}>Frame</CropPreview>);
+  const stage = container.querySelector(".crop-stage")!;
+  const source = container.querySelector(".crop-source") as HTMLElement;
+  fireEvent.wheel(stage, { deltaY: -10000 });
+  expect(source.style.transform).toContain("scale(2)");
+  fireEvent.wheel(stage, { deltaY: 10000 });
+  expect(source.style.transform).toContain("scale(1)");
+  fireEvent.wheel(stage, { deltaY: -10000 });
+  rerender(<CropPreview url="blob:source" duration={10} width={1280} height={720} crop={{ x: 0, y: 0, w: 100, h: 100 }}>Frame</CropPreview>);
+  expect(source.style.transform).toContain("scale(1)");
+});
