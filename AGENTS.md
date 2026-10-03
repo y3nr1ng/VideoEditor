@@ -35,3 +35,4 @@
 - Commit completed work in focused chunks with brief imperative commit messages. Record consequential commit references in the relevant GitHub issues.
 - Use trim-style draggable start/end handles and a shaded selection for speed and zoom ranges. Effect handles adjust effect selection only, never source trim.
 - Crop frames use eight resize handles: four corners and four edge midpoints; dragging inside moves the frame. Crop changes store metadata only.
+- Add `+semver: major`, `+semver: minor`, or `+semver: patch` to commits that warrant a release. The highest directive since the last release wins; omit it for changes that do not need a release. Releases are tagged after successful CI and deployment.
