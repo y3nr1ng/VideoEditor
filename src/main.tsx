@@ -539,7 +539,7 @@ function App() {
       }
     } else if (added.length)
       notify(
-        `Imported ${added.length} ${added.length === 1 ? "file" : "files"}. Use + or drag a resource onto the timeline.`,
+        `Imported ${added.length} ${added.length === 1 ? "file" : "files"}. Drag a resource onto the timeline.`,
       );
   }
   function allowDrop(e: React.DragEvent) {
@@ -848,24 +848,9 @@ function App() {
                       </div>
                     )}
                     <span className="duration-tag">{time(r.duration)}</span>
-                    <span className="kind-tag">
-                      {r.kind === "video" ? (
-                        <IconMovie size={14} />
-                      ) : (
-                        <IconMusic size={14} />
-                      )}
+                    <span className="kind-tag" aria-label="Media format">
+                      {r.name.match(/\.([a-z0-9]+)$/i)?.[1].toUpperCase() ?? r.kind.toUpperCase()}
                     </span>
-                    <button
-                      className="add-resource"
-                      aria-label={`Add ${r.name} to timeline`}
-                      disabled={busy}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        add(r);
-                      }}
-                    >
-                      <IconPlus size={18} />
-                    </button>
                   </div>
                   <div className="resource-name" title={r.name}>
                     {r.name}
@@ -2057,7 +2042,7 @@ function App() {
             <div className="help-copy">
               <p>
                 <strong>Import media.</strong> Import local videos or audio,
-                crop resources if needed, then use + or drag them onto the
+                crop resources if needed, then drag them onto the
                 matching track. Videos append in order; audio clips overlay from
                 the start.
               </p>

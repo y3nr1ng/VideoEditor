@@ -37,3 +37,4 @@
 - Crop frames use eight resize handles: four corners and four edge midpoints; dragging inside moves the frame. Crop changes store metadata only.
 - Add `+semver: major`, `+semver: minor`, or `+semver: patch` to commits that warrant a release. The highest directive since the last release wins; omit it for changes that do not need a release. Releases are tagged after successful CI and deployment.
 - Library Crop buttons share the same transparent icon-only styling in all views; detail view only enlarges the icon/hit target and places it on the right.
+- Resource thumbnails show uppercase file-format badges (MP4, MP3, AVI, etc.) rather than media-kind icon badges. Omit library plus buttons; insert resources by dragging onto tracks.

@@ -303,17 +303,6 @@ h2 {
   border-radius: 3px;
   padding: 3px;
 }
-.add-resource {
-  position: absolute;
-  right: 5px;
-  top: 5px;
-  background: #b3c7df;
-  color: #22262c;
-  border: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 3px;
-}
 .resource-name {
   font-size: 11px;
   font-weight: 550;
@@ -1561,10 +1550,6 @@ kbd {
   gap: 3px;
   font-size: 8px;
 }
-.library-view-small .add-resource {
-  width: 21px;
-  height: 21px;
-}
 .library-view-small .kind-tag {
   padding: 2px;
 }
@@ -2252,3 +2237,5 @@ body,
 .crop-resize-s { bottom: -3px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
 .crop-resize-sw { bottom: -3px; left: -3px; cursor: nesw-resize; }
 .crop-resize-w { top: 50%; left: -3px; transform: translateY(-50%); cursor: ew-resize; }
+
+.kind-tag { padding: 3px 5px; font-size: 9px; font-weight: 600; line-height: 1.2; letter-spacing: .3px; }
