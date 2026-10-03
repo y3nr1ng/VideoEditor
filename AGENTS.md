@@ -1,0 +1,35 @@
+# Project instructions
+
+## GitHub tracking
+
+- Always use GitHub issues to track features, bugs, implementation progress, and especially design choices.
+- Always label issues when creating them, and update labels when scope changes. Use `bug` for defects, `enhancement` for features, `design` for UI/interaction decisions, `testing` for verification or fixtures, `documentation` for documentation work, and `maintenance` for tooling/repository workflow. Apply multiple relevant labels when appropriate.
+- This is a solo-developer project. Do not add contributor-recruitment labels such as `good first issue` or `help wanted`. Keep the label set small and useful; use GitHub open/closed status rather than redundant status labels.
+- Before substantial work, create or identify the relevant issue. Keep it updated with scope, decisions, progress, validation, and remaining limitations.
+- Link related issues in pull requests and final handoffs. Close an issue only when its acceptance criteria are met; keep unresolved work explicit.
+- If GitHub access is unavailable, report the blocker and keep a local record until it can be posted. Do not silently skip tracking.
+
+## Product requirements
+
+- This is a single-page local browser video editor, using Tailwind CSS and Tabler icons.
+- Keep imported media and all media processing on the user's device. Network access may download application assets and the FFmpeg WebAssembly engine; never upload media.
+- Preserve the layout: resources at top left, preview at top right, timeline across the bottom.
+- Keep the interface compact: no global title bar; Export belongs in the Preview heading. Use small corner radii (up to 3px for rectangular surfaces), and omit repeated privacy/local-processing slogans and badges.
+- When empty, the library body is a full-size clickable media drop target. External file drags show a floating overlay only over the resources area below the header, even with existing media; keep the title, Import, and view buttons unobscured; internal resource drags should not show the import overlay.
+- Use concise functional interface copy only. Do not add encouraging, motivational, promotional, or decorative slogans in empty states, panel headings, dialogs, statuses, or help text.
+- Use cool charcoal/blue-gray surfaces with restrained pale-blue accents, 6px panel gaps, and compact outer padding.
+- Selected video source rows overlay real embedded-audio waveforms translucently over thumbnails, below trim masks and editing controls. Extract peaks locally; omit the overlay for silent video.
+- Selecting a video/audio timeline segment expands a full-source row beneath its track. Keep the entire source visible and center the selected retained range, with excluded parts dimmed. Support multiple kept intervals per clip; playback/export concatenate them in source order. Trim handles/fields belong only to Trim mode; Speed/Zoom expose their own effect actions.
+- Fit the editor to the viewport without page scrollbars; bound overflow to content panels and hide scrollbar chrome without disabling wheel/touch access.
+- Timestamp overlays count elapsed edited-video time in HH:MM:SS, default to the whole timeline, and offer edited-time ranges, placement, numeric output-pixel font size, font family, bold, and background controls. Use the same bundled open-license font faces in preview/export.
+- Support draggable trim edges, selected speed ranges, resource cropping before insertion, gradual zoom ranges, common export formats, and optional audio removal.
+- Mark PowerPoint-recommended H.264/AAC MP4 with a PPTX badge. The badge indicates video compatibility, not presentation-file output.
+- Document technical limitations and consequential design decisions in GitHub issues and the README.
+
+## Development
+
+- Use `npm run dev` for the local editor, `npm run build` for production verification, and `npm test` for meaningful timeline/export logic checks.
+- Keep dependencies and generated output ignored; commit source and lockfiles.
+- Use local fixture media for verification; do not add private media to the repository.
+- Keep `test-media` folders exclusively for media resources. Store README files, source metadata, scripts, and other non-media files outside them.
+- Commit completed work in focused chunks with brief imperative commit messages. Record consequential commit references in the relevant GitHub issues.
