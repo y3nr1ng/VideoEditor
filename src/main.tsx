@@ -888,8 +888,7 @@ function App() {
                           openCrop(r);
                         }}
                       >
-                        <IconCrop size={18} />
-                        {libraryView === "details" && <span>Crop</span>}
+                        <IconCrop size={libraryView === "details" ? 24 : 18} />
                       </button>
                     )}
                   </div>

@@ -36,3 +36,4 @@
 - Use trim-style draggable start/end handles and a shaded selection for speed and zoom ranges. Effect handles adjust effect selection only, never source trim.
 - Crop frames use eight resize handles: four corners and four edge midpoints; dragging inside moves the frame. Crop changes store metadata only.
 - Add `+semver: major`, `+semver: minor`, or `+semver: patch` to commits that warrant a release. The highest directive since the last release wins; omit it for changes that do not need a release. Releases are tagged after successful CI and deployment.
+- Library Crop buttons share the same transparent icon-only styling in all views; detail view only enlarges the icon/hit target and places it on the right.
