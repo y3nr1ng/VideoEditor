@@ -1,6 +1,12 @@
 # Localcut / VideoEditor
 
-A single-page, local-only browser video editor built with React, Tailwind CSS, Tabler icons, and FFmpeg WebAssembly. Resources sit at top left, the preview at top right, and the timeline spans the bottom.
+I routinely record screens and small experiments, then need a quick edit for a slide. Online editors make it awkward, and FFmpeg gets the job done—but I used to live in its manual, and now I keep asking an LLM, “How do I do this in FFmpeg?” Installing Premiere on an office desktop just to crop, resize, speed up, and timestamp a tissue scan feels like bringing a film crew to a lab bench.
+
+So here we are: a single-page editor that turns a growing list of edits into FFmpeg commands and runs them locally in your browser through WebAssembly. The engine can be cached by the browser; your recordings stay on your device. Crop now, export later—no pile of temporary cropped videos.
+
+Built with React, Tailwind CSS, and Tabler icons. Resources sit at top left, the preview at top right, and the timeline spans the bottom.
+
+[Open the editor](https://y3nr1ng.github.io/VideoEditor/)
 
 ## Run locally
 
@@ -16,10 +22,10 @@ Open http://127.0.0.1:5173/. The dev server binds to localhost. `npm run build` 
 ## Editing
 
 1. Import supported local video/audio files, or drop them anywhere on the library panel. Dropping an external file directly on its matching timeline track imports and inserts it in one step.
-2. Use the crop icon on a video resource before adding it. Move the crop frame or resize its bottom-right corner; numerical percentages are also available. Existing timeline clips retain their own crop.
+2. Use the crop icon on a video resource before adding it. Move the crop frame or resize it with any of its eight corner/edge handles. Scrub the seek bar or use start, play/pause, and end to inspect frames; Apply crop stores coordinates only; numerical percentages are also available. Existing timeline clips retain their own crop.
 3. Click a resource's + button or drag it onto the matching track. Video clips append in sequence. Audio clips overlay from time zero.
 4. Select a timeline segment to expand its full-source editing row beneath the video or audio track. The entire source stays visible, centered on the selected kept range, with excluded areas dimmed. Videos with audio show translucent waveform lines over the source thumbnails; peaks are decoded locally when the video is first selected. In **Trim** mode, drag source-range edges or edit in/out seconds. Drag across the source and choose **Keep range** to restore another interval, or **Exclude range** to cut out an interval (including a middle section). Multiple kept ranges play/export in source order within the same timeline clip.
-5. Select **Speed range** or **Zoom range**, drag within a kept interval in the source row (or the timeline clip) to choose an effect range, adjust the settings, and click **Apply**. The range fields always use original source seconds. Trim handles and trim fields appear only in Trim mode; Speed and Zoom modes expose only their own range actions. Zoom is video-only. Click an applied effect's chip to remove it.
+5. Select **Speed range** or **Zoom range**, use the trim-style start/end handles in the source row, or drag within a kept interval to choose an effect range, adjust the settings, and click **Apply**. The range fields always use original source seconds. Trim handles and trim fields appear only in Trim mode; Speed and Zoom modes expose only their own range actions. Zoom is video-only. Click an applied effect's chip to remove it.
 6. Hover a timeline clip to reveal its top-right × button, which removes that clip. In the selected source row, hover a speed or zoom interval to remove only that effect. In Trim mode, × removes a kept interval; on the last interval it clears the trim and restores the full source. These controls also appear on keyboard focus and touch devices.
 7. Use the ruler/playhead to seek, and Space to play/pause. Arrow keys step by 0.1 seconds.
 8. Export MP4, MOV, or WebM at 480p, 720p, or 1080p. Audio removal applies to preview and export.
@@ -40,7 +46,7 @@ The editor fills the viewport without page-level horizontal or vertical scrollin
 
 Files are read through browser File APIs and object URLs. FFmpeg runs in a local worker using an in-memory filesystem. Inputs, intermediate segments, metadata, and output are removed from that filesystem after each export. The application has no upload endpoint, telemetry, account, or media-processing server.
 
-The application assets are served locally; timestamp font files are served from the application itself. FFmpeg downloads when first needed for export or the video-audio waveform fallback, using the pinned single-thread `@ffmpeg/core@0.12.10` JavaScript and WASM from jsDelivr (approximately 32 MB). The npm-installed FFmpeg wrapper/worker is bundled with the application. Media bytes never form part of a network request. `@ffmpeg/core` is also installed as a development dependency for integration tests; its WASM is not bundled into the production application.
+The application assets are served by the static website; timestamp font files are served from the application itself. FFmpeg downloads when first needed for export or the video-audio waveform fallback, using the pinned single-thread `@ffmpeg/core@0.12.10` JavaScript and WASM from jsDelivr (approximately 32 MB). The npm-installed FFmpeg wrapper/worker is bundled with the application. Media bytes never form part of a network request. `@ffmpeg/core` is also installed as a development dependency for integration tests; its WASM is not bundled into the production application.
 
 ## Technical choices and limits
 
@@ -64,6 +70,10 @@ npm run test:media
 `npm test` also verifies source-row trim-mode exclusivity, exclusion/restoration interactions for video and audio, and centering while keeping the full source visible. It covers timeline splitting, retimed duration, reversible source/output mapping, zoom interpolation, range validation, and audio tempo chains. Media integration tests are opt-in via `npm run test:media`; they require native `ffmpeg` and `ffprobe` to generate local fixtures and inspect output, while the rendering itself runs through the actual single-thread WASM core. Fixtures and output live in ignored `.local/`.
 
 Integration coverage includes multiple retained intervals for video and audio, crop, speed, gradual zoom, video concatenation, audio mixing including 0.25× slow motion, silent-source audio padding, H.264/AAC MP4, and silent WebM/MOV exports, and actual timestamp burn-in with regular/bold font faces. The browser worker transport and full mouse interactions still require a browser smoke test; the initial layout was visually checked in Chrome.
+
+## CI and deployment
+
+GitHub Actions runs the unit/UI tests, real FFmpeg WebAssembly media tests, and production build for pushes and pull requests. Successful `main` builds deploy `dist/` to GitHub Pages automatically. Generated files are deployment artifacts, not committed build output. GitHub hosts the editor assets; media processing still runs entirely on your device.
 
 ## Tracking
 
