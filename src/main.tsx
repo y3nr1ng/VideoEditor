@@ -56,6 +56,7 @@ import {
   acceptsDrop,
   waitForMedia,
 } from "./drop";
+import { cropHandles, resizeCrop } from "./crop";
 import { CropPreview } from "./CropPreview";
 import { HoverDelete } from "./HoverDelete";
 import { LibraryDropRegion } from "./LibraryDropRegion";
@@ -1800,31 +1801,20 @@ function App() {
               >
                 <span />
                 <span />
-                <button
-                  aria-label="Resize crop"
-                  className="crop-resize"
-                  onPointerDown={(e) => {
-                    const rect =
-                        e.currentTarget.parentElement!.parentElement!.getBoundingClientRect(),
-                      original = { ...draftCrop },
-                      y = e.clientY;
-                    pointerDrag(e, (dx, ev) =>
-                      setDraftCrop({
-                        ...original,
-                        w: clamp(
-                          original.w + (dx / rect.width) * 100,
-                          5,
-                          100 - original.x,
-                        ),
-                        h: clamp(
-                          original.h + ((ev.clientY - y) / rect.height) * 100,
-                          5,
-                          100 - original.y,
-                        ),
-                      }),
-                    );
-                  }}
-                />
+                {cropHandles.map(([handle, label]) => (
+                  <button key={handle}
+                    aria-label={`Resize crop ${label}`}
+                    className={`crop-resize crop-resize-${handle}`}
+                    onPointerDown={(e) => {
+                      const rect = e.currentTarget.parentElement!.parentElement!.getBoundingClientRect();
+                      const original = { ...draftCrop }, y = e.clientY;
+                      pointerDrag(e, (dx, ev) => setDraftCrop(resizeCrop(
+                        original, handle, (dx / rect.width) * 100,
+                        ((ev.clientY - y) / rect.height) * 100,
+                      )));
+                    }}
+                  />
+                ))}
               </div>
             </CropPreview>
             <div className="crop-fields">
@@ -1854,7 +1844,7 @@ function App() {
               ))}
             </div>
             <p className="modal-note">
-              Drag the frame to move it; drag its bottom-right corner to resize.
+              Drag the frame to move it; drag an edge or corner handle to resize.
               Existing timeline clips keep their crop.
             </p>
             <div className="modal-footer">

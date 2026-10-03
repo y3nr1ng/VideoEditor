@@ -34,3 +34,4 @@
 - Keep `test-media` folders exclusively for media resources. Store README files, source metadata, scripts, and other non-media files outside them.
 - Commit completed work in focused chunks with brief imperative commit messages. Record consequential commit references in the relevant GitHub issues.
 - Use trim-style draggable start/end handles and a shaded selection for speed and zoom ranges. Effect handles adjust effect selection only, never source trim.
+- Crop frames use eight resize handles: four corners and four edge midpoints; dragging inside moves the frame. Crop changes store metadata only.
