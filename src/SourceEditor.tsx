@@ -90,6 +90,14 @@ export function SourceEditor({
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
   }
+  function adjustEffect(edge: "start" | "end", value: number) {
+    const retained = ranges.find((r) => range.start >= r.start && range.end <= r.end);
+    const lower = retained?.start ?? 0;
+    const upper = retained?.end ?? resource.duration;
+    onRange(edge === "start"
+      ? { ...range, start: clamp(value, lower, range.end - 0.1) }
+      : { ...range, end: clamp(value, range.start + 0.1, upper) });
+  }
   function selectRange(id: string) {
     const r = ranges.find((r) => r.id === id)!;
     setActiveId(id);
@@ -355,14 +363,24 @@ export function SourceEditor({
                 />
               </div>
             ))}
-          {selection && selection.end > selection.start && (
+          {selection && selection.end > selection.start && !(mode === "zoom" && resource.kind === "audio") && (
             <div
               className="source-draft"
               style={{
                 left: `${(selection.start / resource.duration) * 100}%`,
                 width: `${((selection.end - selection.start) / resource.duration) * 100}%`,
               }}
-            />
+            >
+              {mode !== "trim" && (["start", "end"] as const).map((edge) => (
+                <button key={edge}
+                  aria-label={`${mode === "speed" ? "Speed" : "Zoom"} range ${edge}`}
+                  className={`source-handle ${edge === "start" ? "left" : "right"}`}
+                  disabled={disabled}
+                  onPointerDown={(e) => drag(e, (value) => adjustEffect(edge, value))}>
+                  <IconGripVertical size={14} />
+                </button>
+              ))}
+            </div>
           )}
           <div className="source-ticks">
             {Array.from({ length: 6 }, (_, i) => (
@@ -487,7 +505,7 @@ export function SourceEditor({
           <span>
             {mode === "zoom" && resource.kind === "audio"
               ? "Select a video segment for zoom."
-              : "Drag within a kept range, then apply the settings below."}
+              : "Drag the range edges, then apply the settings below."}
           </span>
         </div>
       )}

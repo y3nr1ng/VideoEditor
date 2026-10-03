@@ -189,3 +189,25 @@ describe("source-context editor", () => {
     expect(left + width).toBeLessThanOrEqual(100);
   });
 });
+
+it.each(["speed", "zoom"] as const)("adjusts %s selection with trim-style handles without trimming the clip", (mode) => {
+  const change = vi.fn();
+  function Harness() {
+    const [range, setRange] = useState({ start: 2, end: 8 });
+    return <SourceEditor {...props} mode={mode} clip={{ ...clip, in: 1, out: 9 }} range={range} onRange={setRange} onChange={change} />;
+  }
+  const { container } = render(<Harness />);
+  vi.spyOn(container.querySelector(".source-strip")!, "getBoundingClientRect").mockReturnValue({ left: 0, width: 1000 } as DOMRect);
+  const label = mode === "speed" ? "Speed" : "Zoom";
+  fireEvent.pointerDown(screen.getByLabelText(`${label} range start`), { clientX: 200 });
+  fireEvent.pointerMove(window, { clientX: 0 });
+  fireEvent.pointerUp(window);
+  const selection = container.querySelector(".source-draft") as HTMLElement;
+  expect(selection.style.left).toBe("10%");
+  fireEvent.pointerDown(screen.getByLabelText(`${label} range end`), { clientX: 800 });
+  fireEvent.pointerMove(window, { clientX: 1000 });
+  fireEvent.pointerUp(window);
+  expect(selection.style.width).toBe("80%");
+  expect(change).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: /Trim start/ })).toBeNull();
+});
