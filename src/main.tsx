@@ -1713,9 +1713,6 @@ function App() {
             </div>
           </div>
           <footer className="timeline-foot">
-            <span>
-              <kbd>SPACE</kbd> Play / pause
-            </span>
             <span>{time(total)} total</span>
           </footer>
         </section>
