@@ -33,7 +33,7 @@
 - Use local fixture media for verification; do not add private media to the repository.
 - Keep `test-media` folders exclusively for media resources. Store README files, source metadata, scripts, and other non-media files outside them.
 - Commit completed work in focused chunks with brief imperative commit messages. Record consequential commit references in the relevant GitHub issues.
-- Use trim-style draggable start/end handles and a shaded selection for speed and zoom ranges. Effect handles adjust effect selection only, never source trim.
+- Use trim-style draggable start/end handles and a shaded selection for speed ranges. Zoom uses source-time keyframes instead of ranges. Effect handles adjust effect selection only, never source trim.
 - Crop frames use eight resize handles: four corners and four edge midpoints; dragging inside moves the frame. Crop changes store metadata only.
 - Add `+semver: major`, `+semver: minor`, or `+semver: patch` to commits that warrant a release. The highest directive since the last release wins; omit it for changes that do not need a release. Releases are tagged after successful CI and deployment.
 - Library Crop buttons share the same transparent icon-only styling in all views; detail view only enlarges the icon/hit target and places it on the right.
@@ -48,3 +48,5 @@
 - Omit the media library header Import button; keep view controls, file drops, and the clickable empty-library file picker.
 - Omit the bottom Space play/pause hint; keep the keyboard shortcut available.
 - Preview fills its available content area without padding/margins or an inner frame border. Omit the top 16:9 badge and preview play button; keyboard playback remains available.
+- Zoom keyframes define scale and center X/Y on the source track. Interpolate all three linearly in source time and hold endpoint views before/after keys. Markers select settings, drag to retime, and X deletes.
+- Annotations use edited-video time and output coordinates: ellipse default, rectangle, or Markdown text. Preview supports moving/resizing; Shift constrains physical 1:1 shapes. Text offers font size/family/bold/italic and uses the same local raster rendering for preview/export. No remote images or raw HTML. Timestamp also offers italic.

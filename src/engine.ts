@@ -1,3 +1,5 @@
+import { type RasterOverlay } from "./annotations";
+import { viewExpression } from "./keyframes";
 import { audioPeaks } from "./waveform";
 import {
   type TimestampOverlay,
@@ -37,6 +39,7 @@ export async function exportProject(
   size: number,
   onStatus: (s: string, p: number) => void,
   timestamp?: TimestampOverlay,
+  overlays: RasterOverlay[] = [],
 ) {
   const ff = engine ?? new FFmpeg();
   engine = ff;
@@ -127,20 +130,25 @@ export async function exportProject(
         const out = `part-${i}-${j}.mp4`;
         files.push(out);
         parts.push(out);
-        const zoomExpr = c.zooms.reduceRight(
-          (rest, z) =>
-            `if(between(${s.start}+on/30*${s.rate},${z.start},${z.end}),${z.from}+(${z.to - z.from})*(${s.start}+on/30*${s.rate}-${z.start})/${z.end - z.start},${rest})`,
-          "1",
-        );
+        const sourceClock = `${s.start}+on/30*${s.rate}`;
+        const zoomExpr = c.zoomKeys?.length
+          ? viewExpression(c, sourceClock, "scale")
+          : c.zooms.reduceRight(
+              (rest, z) =>
+                `if(between(${s.start}+on/30*${s.rate},${z.start},${z.end}),${z.from}+(${z.to - z.from})*(${s.start}+on/30*${s.rate}-${z.start})/${z.end - z.start},${rest})`,
+              "1",
+            );
         const center = (axis: "x" | "y") =>
-          c.zooms.reduceRight(
-            (rest, z) =>
-              `if(between(${s.start}+on/30*${s.rate},${z.start},${z.end}),${z[axis] / 100},${rest})`,
-            "0.5",
-          );
+          c.zoomKeys?.length
+            ? `(${viewExpression(c, sourceClock, axis)})/100`
+            : c.zooms.reduceRight(
+                (rest, z) =>
+                  `if(between(${s.start}+on/30*${s.rate},${z.start},${z.end}),${z[axis] / 100},${rest})`,
+                "0.5",
+              );
         const vf =
           `trim=start=${s.start}:end=${s.end},setpts=(PTS-STARTPTS)/${s.rate},crop=${cropW}:${cropH}:${cropX}:${cropY},scale=${size}:${height}:force_original_aspect_ratio=decrease,pad=${size}:${height}:(ow-iw)/2:(oh-ih)/2:black,setsar=1,fps=30` +
-          (c.zooms.length
+          (c.zooms.length || c.zoomKeys?.length
             ? `,zoompan=z='${zoomExpr}':x='max(0,min(iw-iw/zoom,iw*${center("x")}-iw/zoom/2))':y='max(0,min(ih-ih/zoom,ih*${center("y")}-ih/zoom/2))':d=1:s=${size}x${height}:fps=30`
             : "");
         const args = ["-i", input];
@@ -207,14 +215,6 @@ export async function exportProject(
       filters.push(
         `[0:a]${audio.map((_, i) => `[a${i}]`).join("")}amix=inputs=${audio.length + 1}:duration=first:normalize=0[mix]`,
       );
-      args.push(
-        "-filter_complex",
-        filters.join(";"),
-        "-map",
-        "0:v:0",
-        "-map",
-        "[mix]",
-      );
     }
     const stampRange = timestamp ? timestampRange(timestamp, total) : null;
     const stamped = Boolean(
@@ -229,7 +229,33 @@ export async function exportProject(
         ),
       );
       await ff.writeFile("timestamp-text.txt", timestampExpression);
-      args.push("-vf", timestampFilter(timestamp, total, height));
+    }
+    let videoLabel = "0:v:0";
+    for (const [i, overlay] of overlays.entries()) {
+      const file = `annotation-${i}.png`;
+      files.push(file);
+      await ff.writeFile(file, await fetchFile(overlay.blob));
+      const inputIndex = 1 + (!muted ? audio.length : 0) + i;
+      args.push("-loop", "1", "-i", file);
+      filters.push(
+        `[${videoLabel}][${inputIndex}:v]overlay=0:0:enable='gte(t,${overlay.start})*lt(t,${overlay.end})'[overlay${i}]`,
+      );
+      videoLabel = `overlay${i}`;
+    }
+    if (stamped && timestamp) {
+      filters.push(
+        `[${videoLabel}]${timestampFilter(timestamp, total, height)}[stamped]`,
+      );
+      videoLabel = "stamped";
+    }
+    if (filters.length) {
+      args.push(
+        "-filter_complex",
+        filters.join(";"),
+        "-map",
+        videoLabel === "0:v:0" ? videoLabel : `[${videoLabel}]`,
+      );
+      if (!muted) args.push("-map", audio.length ? "[mix]" : "0:a:0");
     }
     if (muted) args.push("-an");
     if (format === "webm")
@@ -243,8 +269,8 @@ export async function exportProject(
     else
       args.push(
         "-c:v",
-        stamped ? "libx264" : "copy",
-        ...(stamped
+        stamped || overlays.length ? "libx264" : "copy",
+        ...(stamped || overlays.length
           ? ["-preset", "ultrafast", "-crf", "22", "-pix_fmt", "yuv420p"]
           : []),
         ...(!muted ? ["-c:a", "aac", "-b:a", "192k"] : []),

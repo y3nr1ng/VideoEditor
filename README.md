@@ -27,6 +27,8 @@ npm run test:media  # real WASM export tests
 npm run build       # static site in dist/
 ```
 
+Zoom uses linearly interpolated source-time keyframes. Annotations use edited time and output coordinates; Markdown supports headings, lists, bold/italic, code, and line breaks (no raw HTML or remote images). Preview and export share the annotation canvas renderer.
+
 Preview uses browser playback and canvas; export compiles edit metadata into FFmpeg jobs in a worker. The engine downloads on demand. Keep fixture media and generated output in the ignored `.local/` directory, with only media resources inside `test-media` folders.
 
 Follow [AGENTS.md](AGENTS.md) for project conventions. Commit focused chunks with brief imperative messages. GitHub Actions tests pushes and pull requests and deploys successful `main` builds to Pages.

@@ -1,3 +1,11 @@
+import { ZoomEditor } from "./ZoomEditor";
+import { AnnotationEditor } from "./AnnotationEditor";
+import { AnnotationSurface } from "./AnnotationSurface";
+import {
+  type Annotation,
+  drawAnnotation,
+  rasterAnnotations,
+} from "./annotations";
 import React, { useState, useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -26,6 +34,7 @@ import {
   IconGridDots,
   IconLayoutGrid,
   IconClock,
+  IconShape,
 } from "@tabler/icons-react";
 import {
   type Resource,
@@ -78,6 +87,10 @@ function App() {
     [position, setPosition] = useState(0),
     [playing, setPlaying] = useState(false),
     [muted, setMuted] = useState(false),
+    [annotations, setAnnotations] = useState<Annotation[]>([]),
+    [annotationId, setAnnotationId] = useState<string | null>(null),
+    [zoomKeyId, setZoomKeyId] = useState<string | null>(null),
+    [annotationOpen, setAnnotationOpen] = useState(false),
     [featureId, setFeatureId] = useState<string | null>(null),
     [tool, setTool] = useState<"trim" | "speed" | "zoom">("trim"),
     [range, setRange] = useState({ start: 0, end: 0 }),
@@ -164,7 +177,7 @@ function App() {
     if (timestamp.enabled) {
       const font = timestampFonts[timestamp.fontFamily];
       void document.fonts?.load(
-        `${timestamp.bold ? 700 : 400} ${timestamp.fontSize}px "${font.family}"`,
+        `${timestamp.italic ? "italic " : ""}${timestamp.bold ? 700 : 400} ${timestamp.fontSize}px "${font.family}"`,
       );
     }
   }, [
@@ -172,7 +185,20 @@ function App() {
     timestamp.fontFamily,
     timestamp.fontSize,
     timestamp.bold,
+    timestamp.italic,
   ]);
+  useEffect(() => {
+    for (const a of annotations)
+      if (a.kind === "text") {
+        for (const font of Object.values(timestampFonts))
+          for (const weight of [400, 700])
+            for (const style of ["normal", "italic"]) {
+              void document.fonts?.load(
+                `${style} ${weight} ${a.fontSize}px "${font.family}"`,
+              );
+            }
+      }
+  }, [annotations]);
   useEffect(() => {
     if (notice) {
       const t = setTimeout(() => setNotice(""), 6500);
@@ -298,7 +324,12 @@ function App() {
           target.height,
         );
       }
-      if (ctx) drawTimestamp(ctx, timestamp, position, total);
+      if (ctx) {
+        annotations
+          .filter((a) => position >= a.start && position < a.end)
+          .forEach((a) => drawAnnotation(ctx, a));
+        drawTimestamp(ctx, timestamp, position, total);
+      }
       frame = requestAnimationFrame(draw);
     };
     draw();
@@ -314,6 +345,7 @@ function App() {
     zoom.x,
     zoom.y,
     timestamp,
+    annotations,
     position,
     total,
   ]);
@@ -411,6 +443,7 @@ function App() {
   }
   function select(c: Clip) {
     setFeatureId(null);
+    setZoomKeyId(null);
     setSelected(c.id);
     setActiveResource(c.resourceId);
     const first = keptRanges(c)[0];
@@ -562,10 +595,7 @@ function App() {
       if (r.kind !== targetTrack)
         notify(`Drop this resource on the ${r.kind} track.`);
       else add(r);
-    } else if (!r)
-      notify(
-        "Drop a video or audio file from Finder.",
-      );
+    } else if (!r) notify("Drop a video or audio file from Finder.");
   }
   function add(r: Resource) {
     if (busy) return;
@@ -610,12 +640,21 @@ function App() {
     select(c);
     setTool(mode);
     setTimestampOpen(false);
+    setAnnotationOpen(false);
     setFeatureId(id);
-    const effect = mode === "speed" ? c.speeds.find((s) => s.id === id) : c.zooms.find((s) => s.id === id);
+    const effect =
+      mode === "speed"
+        ? c.speeds.find((s) => s.id === id)
+        : c.zooms.find((s) => s.id === id);
     if (!effect) return;
     setRange({ start: effect.start, end: effect.end });
     if ("rate" in effect) setRate(effect.rate);
-    else { setZoomFrom(effect.from); setZoomTo(effect.to); setZoomX(effect.x); setZoomY(effect.y); }
+    else {
+      setZoomFrom(effect.from);
+      setZoomTo(effect.to);
+      setZoomX(effect.x);
+      setZoomY(effect.y);
+    }
   }
   function applyEffect() {
     if (tool === "trim" || busy) return;
@@ -626,7 +665,8 @@ function App() {
     if (tool === "speed") {
       if (
         selectedClip.speeds.some(
-          (s) => s.id !== featureId && range.start < s.end && range.end > s.start,
+          (s) =>
+            s.id !== featureId && range.start < s.end && range.end > s.start,
         )
       ) {
         notify("Speed ranges cannot overlap. Remove the existing range first.");
@@ -634,13 +674,17 @@ function App() {
       }
       updateClip(selectedClip.id, (c) => ({
         ...c,
-        speeds: [...c.speeds.filter((s) => s.id !== featureId), { id: featureId ?? uid(), ...range, rate }],
+        speeds: [
+          ...c.speeds.filter((s) => s.id !== featureId),
+          { id: featureId ?? uid(), ...range, rate },
+        ],
       }));
     } else {
       if (selectedRes?.kind !== "video") return;
       if (
         selectedClip.zooms.some(
-          (s) => s.id !== featureId && range.start < s.end && range.end > s.start,
+          (s) =>
+            s.id !== featureId && range.start < s.end && range.end > s.start,
         )
       ) {
         notify("Zoom ranges cannot overlap. Remove the existing range first.");
@@ -684,6 +728,11 @@ function App() {
           setProgress(p);
         },
         timestamp,
+        await rasterAnnotations(
+          annotations,
+          size,
+          Math.round((size * 9) / 16 / 2) * 2,
+        ),
       );
       if (downloadURL.current) URL.revokeObjectURL(downloadURL.current);
       const url = URL.createObjectURL(blob);
@@ -854,7 +903,8 @@ function App() {
                     )}
                     <span className="duration-tag">{time(r.duration)}</span>
                     <span className="kind-tag" aria-label="Media format">
-                      {r.name.match(/\.([a-z0-9]+)$/i)?.[1].toUpperCase() ?? r.kind.toUpperCase()}
+                      {r.name.match(/\.([a-z0-9]+)$/i)?.[1].toUpperCase() ??
+                        r.kind.toUpperCase()}
                     </span>
                   </div>
                   <div className="resource-name" title={r.name}>
@@ -942,6 +992,16 @@ function App() {
                       )
                     }
                   />
+                  {annotationOpen && (
+                    <AnnotationSurface
+                      items={annotations}
+                      selected={annotationId}
+                      onSelect={setAnnotationId}
+                      onChange={setAnnotations}
+                      position={position}
+                      disabled={busy}
+                    />
+                  )}
                   <canvas
                     ref={canvasRef}
                     className="preview-canvas"
@@ -1034,367 +1094,391 @@ function App() {
         </section>
         <section className="timeline-panel panel">
           <aside className="feature-sidebar" aria-label="Edit">
-            <div className="feature-buttons"><h2>Edit</h2>
-            <div className="tools">
-              {(
-                [
-                  { id: "trim", label: "Trim", icon: IconCut },
-                  { id: "speed", label: "Speed", icon: IconGauge },
-                  { id: "zoom", label: "Zoom", icon: IconZoomIn },
-                ] as const
-              ).map((t) => (
-                <button
-                  key={t.id}
-                  title={t.label}
-                  aria-label={t.label}
-                  className={!timestampOpen && tool === t.id ? "chosen" : ""}
-                  aria-pressed={!timestampOpen && tool === t.id}
-                  disabled={busy}
-                  onClick={() => {
-                    setTool(t.id);
-                    setFeatureId(null);
-                    setTimestampOpen(false);
-                    if (selectedClip)
-                      setRange({
-                        start: keptRanges(selectedClip)[0].start,
-                        end: keptRanges(selectedClip)[0].end,
-                      });
-                  }}
-                >
-                  <t.icon size={24} />
-                </button>
-              ))}
-              <button
-                className={timestampOpen ? "chosen" : ""}
-                aria-pressed={timestampOpen}
-                disabled={busy}
-                title="Timestamp"
-                aria-label="Timestamp overlay settings"
-                aria-expanded={timestampOpen}
-                onClick={() => {
-                  if (!timestamp.enabled)
-                    setTimestamp((p) => ({ ...p, enabled: true }));
-                  setTimestampOpen(!timestampOpen);
-                }}
-              >
-                <IconClock size={24} />
-              </button>
-            </div>
-            </div>
-            <div className="feature-settings">
-          {timestampOpen && (
-            <div className="timestamp-controls" aria-label="Timestamp settings">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={timestamp.enabled}
-                  disabled={busy}
-                  onChange={(e) =>
-                    setTimestamp({ ...timestamp, enabled: e.target.checked })
-                  }
-                />
-                Timestamp
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={timestamp.entire}
-                  disabled={busy}
-                  onChange={(e) =>
-                    setTimestamp({
-                      ...timestamp,
-                      entire: e.target.checked,
-                      start: 0,
-                      end: total,
-                    })
-                  }
-                />
-                Entire timeline
-              </label>
-              {!timestamp.entire && (
-                <>
-                  <label>
-                    From
-                    <input
-                      type="number"
-                      aria-label="Timestamp start seconds"
-                      min="0"
-                      max={total}
-                      step=".1"
-                      disabled={busy}
-                      value={timestamp.start}
-                      onChange={(e) =>
-                        setTimestamp({
-                          ...timestamp,
-                          start: clamp(+e.target.value, 0, total),
-                        })
-                      }
-                    />
-                    s
-                  </label>
-                  <label>
-                    To
-                    <input
-                      type="number"
-                      aria-label="Timestamp end seconds"
-                      min="0"
-                      max={total}
-                      step=".1"
-                      disabled={busy}
-                      value={timestamp.end}
-                      onChange={(e) =>
-                        setTimestamp({
-                          ...timestamp,
-                          end: clamp(+e.target.value, 0, total),
-                        })
-                      }
-                    />
-                    s
-                  </label>
-                </>
-              )}
-              <select
-                aria-label="Timestamp position"
-                disabled={busy}
-                value={timestamp.placement}
-                onChange={(e) =>
-                  setTimestamp({
-                    ...timestamp,
-                    placement: e.target.value as TimestampOverlay["placement"],
-                  })
-                }
-              >
+            <div className="feature-buttons">
+              <h2>Edit</h2>
+              <div className="tools">
                 {(
                   [
-                    "top-left",
-                    "top-right",
-                    "bottom-left",
-                    "bottom-right",
-                    "bottom-center",
+                    { id: "trim", label: "Trim", icon: IconCut },
+                    { id: "speed", label: "Speed", icon: IconGauge },
+                    { id: "zoom", label: "Zoom", icon: IconZoomIn },
                   ] as const
-                ).map((p) => (
-                  <option key={p} value={p}>
-                    {p.replace("-", " ")}
-                  </option>
+                ).map((t) => (
+                  <button
+                    key={t.id}
+                    title={t.label}
+                    aria-label={t.label}
+                    className={
+                      !annotationOpen && !timestampOpen && tool === t.id
+                        ? "chosen"
+                        : ""
+                    }
+                    aria-pressed={
+                      !annotationOpen && !timestampOpen && tool === t.id
+                    }
+                    disabled={busy}
+                    onClick={() => {
+                      setAnnotationOpen(false);
+                      setTool(t.id);
+                      setFeatureId(null);
+                      setTimestampOpen(false);
+                      if (selectedClip)
+                        setRange({
+                          start: keptRanges(selectedClip)[0].start,
+                          end: keptRanges(selectedClip)[0].end,
+                        });
+                    }}
+                  >
+                    <t.icon size={24} />
+                  </button>
                 ))}
-              </select>
-              <label>
-                Font size
-                <input
-                  aria-label="Timestamp font size (output pixels)"
-                  type="number"
-                  min="8"
-                  max="144"
-                  step="1"
-                  value={timestamp.fontSize}
+                <button
+                  className={timestampOpen ? "chosen" : ""}
+                  aria-pressed={timestampOpen}
                   disabled={busy}
-                  onChange={(e) =>
-                    setTimestamp({
-                      ...timestamp,
-                      fontSize: clamp(+e.target.value, 8, 144),
-                    })
-                  }
+                  title="Timestamp"
+                  aria-label="Timestamp overlay settings"
+                  aria-expanded={timestampOpen}
+                  onClick={() => {
+                    setAnnotationOpen(false);
+                    if (!timestamp.enabled)
+                      setTimestamp((p) => ({ ...p, enabled: true }));
+                    setTimestampOpen(!timestampOpen);
+                  }}
+                >
+                  <IconClock size={24} />
+                </button>
+                <button
+                  title="Annotation"
+                  aria-label="Annotation"
+                  aria-pressed={annotationOpen}
+                  className={annotationOpen ? "chosen" : ""}
+                  disabled={busy}
+                  onClick={() => {
+                    setAnnotationOpen(!annotationOpen);
+                    setTimestampOpen(false);
+                  }}
+                >
+                  <IconShape size={24} />
+                </button>
+              </div>
+            </div>
+            <div className="feature-settings">
+              {annotationOpen && (
+                <AnnotationEditor
+                  items={annotations}
+                  selected={annotationId}
+                  onSelect={setAnnotationId}
+                  onChange={setAnnotations}
+                  total={total}
+                  disabled={busy}
                 />
-                px
-              </label>
-              <select
-                aria-label="Timestamp font family"
-                disabled={busy}
-                value={timestamp.fontFamily}
-                onChange={(e) =>
-                  setTimestamp({
-                    ...timestamp,
-                    fontFamily: e.target
-                      .value as TimestampOverlay["fontFamily"],
-                  })
+              )}
+              {timestampOpen && (
+                <div
+                  className="timestamp-controls"
+                  aria-label="Timestamp settings"
+                >
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={timestamp.enabled}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setTimestamp({
+                          ...timestamp,
+                          enabled: e.target.checked,
+                        })
+                      }
+                    />
+                    Timestamp
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={timestamp.entire}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setTimestamp({
+                          ...timestamp,
+                          entire: e.target.checked,
+                          start: 0,
+                          end: total,
+                        })
+                      }
+                    />
+                    Entire timeline
+                  </label>
+                  {!timestamp.entire && (
+                    <>
+                      <label>
+                        From
+                        <input
+                          type="number"
+                          aria-label="Timestamp start seconds"
+                          min="0"
+                          max={total}
+                          step=".1"
+                          disabled={busy}
+                          value={timestamp.start}
+                          onChange={(e) =>
+                            setTimestamp({
+                              ...timestamp,
+                              start: clamp(+e.target.value, 0, total),
+                            })
+                          }
+                        />
+                        s
+                      </label>
+                      <label>
+                        To
+                        <input
+                          type="number"
+                          aria-label="Timestamp end seconds"
+                          min="0"
+                          max={total}
+                          step=".1"
+                          disabled={busy}
+                          value={timestamp.end}
+                          onChange={(e) =>
+                            setTimestamp({
+                              ...timestamp,
+                              end: clamp(+e.target.value, 0, total),
+                            })
+                          }
+                        />
+                        s
+                      </label>
+                    </>
+                  )}
+                  <select
+                    aria-label="Timestamp position"
+                    disabled={busy}
+                    value={timestamp.placement}
+                    onChange={(e) =>
+                      setTimestamp({
+                        ...timestamp,
+                        placement: e.target
+                          .value as TimestampOverlay["placement"],
+                      })
+                    }
+                  >
+                    {(
+                      [
+                        "top-left",
+                        "top-right",
+                        "bottom-left",
+                        "bottom-right",
+                        "bottom-center",
+                      ] as const
+                    ).map((p) => (
+                      <option key={p} value={p}>
+                        {p.replace("-", " ")}
+                      </option>
+                    ))}
+                  </select>
+                  <label>
+                    Font size
+                    <input
+                      aria-label="Timestamp font size (output pixels)"
+                      type="number"
+                      min="8"
+                      max="144"
+                      step="1"
+                      value={timestamp.fontSize}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setTimestamp({
+                          ...timestamp,
+                          fontSize: clamp(+e.target.value, 8, 144),
+                        })
+                      }
+                    />
+                    px
+                  </label>
+                  <select
+                    aria-label="Timestamp font family"
+                    disabled={busy}
+                    value={timestamp.fontFamily}
+                    onChange={(e) =>
+                      setTimestamp({
+                        ...timestamp,
+                        fontFamily: e.target
+                          .value as TimestampOverlay["fontFamily"],
+                      })
+                    }
+                  >
+                    {Object.entries(timestampFonts).map(([id, font]) => (
+                      <option key={id} value={id}>
+                        {font.label}
+                      </option>
+                    ))}
+                  </select>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={timestamp.bold}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setTimestamp({ ...timestamp, bold: e.target.checked })
+                      }
+                    />
+                    Bold
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={timestamp.italic ?? false}
+                      disabled={busy}
+                      onChange={(e) =>
+                        setTimestamp({ ...timestamp, italic: e.target.checked })
+                      }
+                    />
+                    Italic
+                  </label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      disabled={busy}
+                      checked={timestamp.background}
+                      onChange={(e) =>
+                        setTimestamp({
+                          ...timestamp,
+                          background: e.target.checked,
+                        })
+                      }
+                    />
+                    Background
+                  </label>
+                  <span>00:00:00 · edited time</span>
+                  <button
+                    className="icon-button"
+                    aria-label="Close timestamp settings"
+                    onClick={() => setTimestampOpen(false)}
+                  >
+                    <IconX size={16} />
+                  </button>
+                </div>
+              )}
+              <div
+                className="inspector"
+                hidden={
+                  annotationOpen ||
+                  timestampOpen ||
+                  !selectedClip ||
+                  !selectedRes
                 }
               >
-                {Object.entries(timestampFonts).map(([id, font]) => (
-                  <option key={id} value={id}>
-                    {font.label}
-                  </option>
-                ))}
-              </select>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={timestamp.bold}
-                  disabled={busy}
-                  onChange={(e) =>
-                    setTimestamp({ ...timestamp, bold: e.target.checked })
-                  }
-                />
-                Bold
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  disabled={busy}
-                  checked={timestamp.background}
-                  onChange={(e) =>
-                    setTimestamp({ ...timestamp, background: e.target.checked })
-                  }
-                />
-                Background
-              </label>
-              <span>00:00:00 · edited time</span>
-              <button
-                className="icon-button"
-                aria-label="Close timestamp settings"
-                onClick={() => setTimestampOpen(false)}
-              >
-                <IconX size={16} />
-              </button>
-            </div>
-          )}
-          <div className="inspector" hidden={timestampOpen || !selectedClip || !selectedRes}>
-            {selectedClip && selectedRes ? (
-              <>
-                {tool === "trim" ? (
-                  <div className="effect-fields">
-                    <span>Trim</span>
-                    <span>{time(range.start)}–{time(range.end)}</span>
-                  </div>
-                ) : (
-                  <div className="effect-fields">
-                    <label>
-                      From
-                      <input
-                        aria-label="Effect start seconds"
-                        type="number"
-                        step=".1"
-                        value={+range.start.toFixed(2)}
-                        onChange={(e) =>
-                          setRange({ ...range, start: +e.target.value })
+                {selectedClip && selectedRes ? (
+                  <>
+                    {tool === "zoom" && selectedRes.kind === "video" ? (
+                      <ZoomEditor
+                        selected={zoomKeyId}
+                        setSelected={setZoomKeyId}
+                        clip={selectedClip}
+                        resource={selectedRes}
+                        onChange={(next) => updateClip(next.id, () => next)}
+                        onSeek={(t) => {
+                          setPlaying(false);
+                          seek(
+                            (positioned.find((p) => p.c.id === selectedClip.id)
+                              ?.start ?? 0) + outputAt(selectedClip, t),
+                          );
+                        }}
+                        disabled={busy}
+                        position={
+                          position -
+                          (positioned.find((p) => p.c.id === selectedClip.id)
+                            ?.start ?? 0)
                         }
                       />
-                      s
-                    </label>
-                    <label>
-                      To
-                      <input
-                        aria-label="Effect end seconds"
-                        type="number"
-                        step=".1"
-                        value={+range.end.toFixed(2)}
-                        onChange={(e) =>
-                          setRange({ ...range, end: +e.target.value })
-                        }
-                      />
-                      s
-                    </label>
-                    {tool === "speed" ? (
-                      <select
-                        aria-label="Range playback speed"
-                        value={rate}
-                        onChange={(e) => setRate(+e.target.value)}
-                      >
-                        {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4].map((r) => (
-                          <option key={r} value={r}>
-                            {r}×{" "}
-                            {r < 1 ? "slower" : r > 1 ? "faster" : "normal"}
-                          </option>
-                        ))}
-                      </select>
+                    ) : tool === "zoom" ? <span>Zoom requires a video segment.</span> : tool === "trim" ? (
+                      <div className="effect-fields">
+                        <span>Trim</span>
+                        <span>
+                          {time(range.start)}–{time(range.end)}
+                        </span>
+                      </div>
                     ) : (
-                      <>
-                        <select
-                          aria-label="Starting zoom"
-                          value={zoomFrom}
-                          onChange={(e) => setZoomFrom(+e.target.value)}
-                        >
-                          {[1, 1.25, 1.5, 2, 3].map((z) => (
-                            <option key={z} value={z}>
-                              {z}× start
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          aria-label="Ending zoom"
-                          value={zoomTo}
-                          onChange={(e) => setZoomTo(+e.target.value)}
-                        >
-                          {[1, 1.25, 1.5, 2, 3].map((z) => (
-                            <option key={z} value={z}>
-                              {z}× end
-                            </option>
-                          ))}
-                        </select>
+                      <div className="effect-fields">
                         <label>
-                          X
+                          From
                           <input
-                            aria-label="Zoom center X percent"
+                            aria-label="Effect start seconds"
                             type="number"
-                            min="0"
-                            max="100"
-                            value={zoomX}
+                            step=".1"
+                            value={+range.start.toFixed(2)}
                             onChange={(e) =>
-                              setZoomX(clamp(+e.target.value, 0, 100))
+                              setRange({ ...range, start: +e.target.value })
                             }
                           />
-                          %
+                          s
                         </label>
                         <label>
-                          Y
+                          To
                           <input
-                            aria-label="Zoom center Y percent"
+                            aria-label="Effect end seconds"
                             type="number"
-                            min="0"
-                            max="100"
-                            value={zoomY}
+                            step=".1"
+                            value={+range.end.toFixed(2)}
                             onChange={(e) =>
-                              setZoomY(clamp(+e.target.value, 0, 100))
+                              setRange({ ...range, end: +e.target.value })
                             }
                           />
-                          %
+                          s
                         </label>
-                      </>
+                          <select
+                            aria-label="Range playback speed"
+                            value={rate}
+                            onChange={(e) => setRate(+e.target.value)}
+                          >
+                            {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4].map(
+                              (r) => (
+                                <option key={r} value={r}>
+                                  {r}×{" "}
+                                  {r < 1
+                                    ? "slower"
+                                    : r > 1
+                                      ? "faster"
+                                      : "normal"}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        <button
+                          className="small-button accent"
+                          disabled={busy}
+                          onClick={applyEffect}
+                        >
+                          {featureId ? "Update feature" : "Apply feature"}
+                        </button>
+                      </div>
                     )}
                     <button
-                      className="small-button accent"
-                      disabled={
-                        busy ||
-                        (tool === "zoom" && selectedRes.kind !== "video")
-                      }
-                      onClick={applyEffect}
+                      className="icon-button delete"
+                      aria-label="Remove selected clip"
+                      disabled={busy}
+                      onClick={() => removeClip()}
                     >
-                      {featureId ? "Update feature" : "Apply feature"}
+                      <IconTrash size={17} />
                     </button>
-                  </div>
-                )}
-                <button
-                  className="icon-button delete"
-                  aria-label="Remove selected clip"
-                  disabled={busy}
-                  onClick={() => removeClip()}
-                >
-                  <IconTrash size={17} />
-                </button>
-                <div className="effect-list">
-                  {tool === "speed" &&
-                    selectedClip.speeds.map((s) => (
-                      <button
-                        key={s.id}
-                        disabled={busy}
-                        onClick={() => selectFeature(selectedClip, "speed", s.id)}
-                      >
-                        {time(s.start)}–{time(s.end)} · {s.rate}×{" "}
-                      </button>
-                    ))}
-                  {tool === "zoom" &&
-                    selectedClip.zooms.map((s) => (
-                      <button
-                        key={s.id}
-                        disabled={busy}
-                        onClick={() => selectFeature(selectedClip, "zoom", s.id)}
-                      >
-                        {time(s.start)}–{time(s.end)} · {s.from}→{s.to}×{" "}
-                      </button>
-                    ))}
-                </div>
-              </>
-            ) : null}
-          </div>
+                    <div className="effect-list">
+                      {tool === "speed" &&
+                        selectedClip.speeds.map((s) => (
+                          <button
+                            key={s.id}
+                            disabled={busy}
+                            onClick={() =>
+                              selectFeature(selectedClip, "speed", s.id)
+                            }
+                          >
+                            {time(s.start)}–{time(s.end)} · {s.rate}×{" "}
+                          </button>
+                        ))}
+                    </div>
+                  </>
+                ) : null}
+              </div>
             </div>
           </aside>
           <div className="timeline-heading">
@@ -1444,6 +1528,7 @@ function App() {
                   )}
                 </React.Fragment>
               ))}
+              {annotations.map((a, i) => <div className="annotation-track-label" key={a.id}><IconShape size={16}/><span>Annotation {i+1}</span></div>)}
               {timestamp.enabled && (
                 <div className="timestamp-track-label">
                   <IconClock size={16} />
@@ -1628,18 +1713,37 @@ function App() {
                       clip={selectedClip}
                       resource={selectedRes}
                       mode={tool}
+                      selectedKeyId={zoomKeyId}
+                      onSelectKey={(id) => {
+                        setZoomKeyId(id);
+                        setTool("zoom");
+                        setAnnotationOpen(false);
+                        setTimestampOpen(false);
+                      }}
                       disabled={busy}
                       range={range}
                       onRange={setRange}
-                      onSelectFeature={(mode, id) => selectFeature(selectedClip, mode, id)}
+                      onSelectFeature={(mode, id) =>
+                        selectFeature(selectedClip, mode, id)
+                      }
                       onChange={(next) => {
                         updateClip(next.id, () => next);
                         if (tool === "trim") {
                           const retained = keptRanges(next);
-                          const active = retained.find((r) => r.start <= range.start && r.end >= range.end) ?? retained[0];
+                          const active =
+                            retained.find(
+                              (r) =>
+                                r.start <= range.start && r.end >= range.end,
+                            ) ?? retained[0];
                           setRange({ start: active.start, end: active.end });
                         }
-                        if (featureId && ![...next.speeds, ...next.zooms].some((f) => f.id === featureId)) setFeatureId(null);
+                        if (
+                          featureId &&
+                          ![...next.speeds, ...next.zooms].some(
+                            (f) => f.id === featureId,
+                          )
+                        )
+                          setFeatureId(null);
                       }}
                       onSeek={(sourceTime) => {
                         setPlaying(false);
@@ -1651,6 +1755,31 @@ function App() {
                     />
                   )}
                 </React.Fragment>
+              ))}
+              {annotations.map((a, i) => (
+                <div className="annotation-track" key={a.id}>
+                  <div
+                    className="annotation-segment"
+                    style={{
+                      left: `${(a.start / rulerDuration) * 100}%`,
+                      width: `${((a.end - a.start) / rulerDuration) * 100}%`,
+                    }}
+                    onClick={() => {
+                      setAnnotationId(a.id);
+                      setAnnotationOpen(true);
+                      setTimestampOpen(false);
+                    }}
+                  >
+                    {i + 1} · {a.kind}
+                    <HoverDelete
+                      label={`Delete annotation ${i + 1}`}
+                      disabled={busy}
+                      onDelete={() =>
+                        setAnnotations(annotations.filter((x) => x.id !== a.id))
+                      }
+                    />
+                  </div>
+                </div>
               ))}
               {timestamp.enabled && (
                 <div className="timestamp-track">
@@ -1743,8 +1872,15 @@ function App() {
                 <IconX size={20} />
               </button>
             </div>
-            <CropPreview key={cropRes.id} url={cropRes.url} poster={cropRes.thumb}
-              duration={cropRes.duration} width={cropRes.width} height={cropRes.height} crop={draftCrop}>
+            <CropPreview
+              key={cropRes.id}
+              url={cropRes.url}
+              poster={cropRes.thumb}
+              duration={cropRes.duration}
+              width={cropRes.width}
+              height={cropRes.height}
+              crop={draftCrop}
+            >
               <div
                 className="crop-box"
                 style={{
@@ -1778,46 +1914,93 @@ function App() {
                 <span />
                 <span />
                 {cropHandles.map(([handle, label]) => (
-                  <button key={handle}
+                  <button
+                    key={handle}
                     aria-label={`Resize crop ${label}`}
                     className={`crop-resize crop-resize-${handle}`}
                     onPointerDown={(e) => {
-                      const rect = e.currentTarget.parentElement!.parentElement!.getBoundingClientRect();
-                      const original = { ...draftCrop }, y = e.clientY;
-                      pointerDrag(e, (dx, ev) => setDraftCrop(resizeCrop(
-                        original, handle, (dx / rect.width) * 100,
-                        ((ev.clientY - y) / rect.height) * 100,
-                      )));
+                      const rect =
+                        e.currentTarget.parentElement!.parentElement!.getBoundingClientRect();
+                      const original = { ...draftCrop },
+                        y = e.clientY;
+                      pointerDrag(e, (dx, ev) =>
+                        setDraftCrop(
+                          resizeCrop(
+                            original,
+                            handle,
+                            (dx / rect.width) * 100,
+                            ((ev.clientY - y) / rect.height) * 100,
+                          ),
+                        ),
+                      );
                     }}
                   />
                 ))}
               </div>
             </CropPreview>
             <div className="crop-fields">
-              {([ ["x", "y"], ["w", "h"] ] as const).map((keys, i) => (
+              {(
+                [
+                  ["x", "y"],
+                  ["w", "h"],
+                ] as const
+              ).map((keys, i) => (
                 <div className="crop-field-group" key={i}>
                   {keys.map((key) => {
-                    const factor = cropUnit === "pixel" ? (key === "x" || key === "w" ? cropRes.width : cropRes.height) / 100 : 1;
-                    return <label key={key}>
-                      {{ x: "Left", y: "Top", w: "Width", h: "Height" }[key]}
-                      <input type="number" step={cropUnit === "pixel" ? 1 : 0.1}
-                        min={(key === "w" || key === "h" ? 5 : 0) * factor}
-                        max={100 * factor}
-                        value={cropUnit === "pixel" ? Math.round(draftCrop[key] * factor) : +draftCrop[key].toFixed(1)}
-                        onChange={(e) => setDraftCrop((p) => {
-                          const value = +e.target.value / factor;
-                          if (key === "x") return { ...p, x: clamp(value, 0, 100 - p.w) };
-                          if (key === "y") return { ...p, y: clamp(value, 0, 100 - p.h) };
-                          if (key === "w") return { ...p, w: clamp(value, 5, 100 - p.x) };
-                          return { ...p, h: clamp(value, 5, 100 - p.y) };
-                        })} />
-                    </label>;
+                    const factor =
+                      cropUnit === "pixel"
+                        ? (key === "x" || key === "w"
+                            ? cropRes.width
+                            : cropRes.height) / 100
+                        : 1;
+                    return (
+                      <label key={key}>
+                        {{ x: "Left", y: "Top", w: "Width", h: "Height" }[key]}
+                        <input
+                          type="number"
+                          step={cropUnit === "pixel" ? 1 : 0.1}
+                          min={(key === "w" || key === "h" ? 5 : 0) * factor}
+                          max={100 * factor}
+                          value={
+                            cropUnit === "pixel"
+                              ? Math.round(draftCrop[key] * factor)
+                              : +draftCrop[key].toFixed(1)
+                          }
+                          onChange={(e) =>
+                            setDraftCrop((p) => {
+                              const value = +e.target.value / factor;
+                              if (key === "x")
+                                return { ...p, x: clamp(value, 0, 100 - p.w) };
+                              if (key === "y")
+                                return { ...p, y: clamp(value, 0, 100 - p.h) };
+                              if (key === "w")
+                                return { ...p, w: clamp(value, 5, 100 - p.x) };
+                              return { ...p, h: clamp(value, 5, 100 - p.y) };
+                            })
+                          }
+                        />
+                      </label>
+                    );
                   })}
                 </div>
               ))}
-              <div className="crop-unit-toggle" role="group" aria-label="Crop units">
-                <button aria-pressed={cropUnit === "percent"} onClick={() => setCropUnit("percent")}>%</button>
-                <button aria-pressed={cropUnit === "pixel"} onClick={() => setCropUnit("pixel")}>px</button>
+              <div
+                className="crop-unit-toggle"
+                role="group"
+                aria-label="Crop units"
+              >
+                <button
+                  aria-pressed={cropUnit === "percent"}
+                  onClick={() => setCropUnit("percent")}
+                >
+                  %
+                </button>
+                <button
+                  aria-pressed={cropUnit === "pixel"}
+                  onClick={() => setCropUnit("pixel")}
+                >
+                  px
+                </button>
               </div>
             </div>
             <div className="modal-footer">
@@ -1830,9 +2013,7 @@ function App() {
                     ),
                   );
                   setCropTarget(null);
-                  notify(
-                    "Crop applied to new clips.",
-                  );
+                  notify("Crop applied to new clips.");
                 }}
               >
                 <IconCheck size={16} /> Apply crop
@@ -1946,8 +2127,8 @@ function App() {
               <span>30 fps · 16:9</span>
             </div>
             <p className="modal-note">
-              The engine downloads when first needed (~32 MB). Keep this tab open;
-              longer videos may take several minutes.
+              The engine downloads when first needed (~32 MB). Keep this tab
+              open; longer videos may take several minutes.
             </p>
             {busy && (
               <div className="export-progress">
@@ -2025,9 +2206,9 @@ function App() {
             <div className="help-copy">
               <p>
                 <strong>Import media.</strong> Import local videos or audio,
-                crop resources if needed, then drag them onto the
-                matching track. Videos append in order; audio clips overlay from
-                the start.
+                crop resources if needed, then drag them onto the matching
+                track. Videos append in order; audio clips overlay from the
+                start.
               </p>
               <p>
                 <strong>Edit segments.</strong> Select a segment to open its

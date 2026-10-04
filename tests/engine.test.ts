@@ -309,6 +309,97 @@ integration("real single-thread FFmpeg WASM export", () => {
     },
     120000,
   );
+  it("exports keyframes, timed annotation overlays, italic timestamps and mixed audio together", async () => {
+    execFileSync("ffmpeg", [
+      "-v",
+      "error",
+      "-f",
+      "lavfi",
+      "-i",
+      "color=red:s=320x180",
+      "-frames:v",
+      "1",
+      "-threads",
+      "1",
+      "-y",
+      ".local/annotation.png",
+    ]);
+    (globalThis as any).document = { baseURI: "http://localhost/" };
+    const r = fixture("test-video.mp4", "video"),
+      a = fixture("test-audio.wav", "audio");
+    const c = {
+      ...clip(r.id),
+      in: 0,
+      out: 3,
+      speeds: [],
+      zooms: [],
+      zoomKeys: [
+        { id: "k1", time: 0, scale: 1, x: 30, y: 40 },
+        { id: "k2", time: 3, scale: 2, x: 70, y: 60 },
+      ],
+    };
+    const blob = await exportProject(
+      [c],
+      [{ ...clip(a.id), in: 0, out: 3, speeds: [], zooms: [] }],
+      [r, a],
+      "mp4",
+      false,
+      320,
+      () => {},
+      { ...defaultTimestamp, enabled: true, italic: true, fontSize: 16 },
+      [
+        {
+          blob: new Blob([readFileSync(".local/annotation.png")]),
+          start: 1,
+          end: 2,
+        },
+      ],
+    );
+    writeFileSync(
+      ".local/verified-annotation.mp4",
+      new Uint8Array(await blob.arrayBuffer()),
+    );
+    const sample = (t: number) =>
+      execFileSync("ffmpeg", [
+        "-v",
+        "error",
+        "-ss",
+        String(t),
+        "-i",
+        ".local/verified-annotation.mp4",
+        "-frames:v",
+        "1",
+        "-vf",
+        "crop=2:2:160:90",
+        "-f",
+        "rawvideo",
+        "-pix_fmt",
+        "rgb24",
+        "-",
+      ]);
+    expect(sample(1.5)[0]).toBeGreaterThan(240);
+    expect(sample(1.5)[1]).toBeLessThan(15);
+    expect(Buffer.compare(sample(0.5), sample(1.5))).not.toBe(0);
+    expect(Buffer.compare(sample(2.5), sample(1.5))).not.toBe(0);
+    const meta = JSON.parse(
+      execFileSync(
+        "ffprobe",
+        [
+          "-v",
+          "error",
+          "-show_streams",
+          "-of",
+          "json",
+          ".local/verified-annotation.mp4",
+        ],
+        { encoding: "utf8" },
+      ),
+    );
+    expect(
+      meta.streams.some((stream: any) => stream.codec_type === "audio"),
+    ).toBe(true);
+    cancelExport();
+  }, 120000);
   it("pads silent source clips with audio before concatenating", async () => {
     execFileSync("ffmpeg", [
       "-hide_banner",
