@@ -1055,8 +1055,8 @@ function App() {
           </div>
         </section>
         <section className="timeline-panel panel">
-          <aside className="feature-sidebar" aria-label="Features">
-            <div className="feature-buttons"><h2>Features</h2>
+          <aside className="feature-sidebar" aria-label="Edit">
+            <div className="feature-buttons"><h2>Edit</h2>
             <div className="tools">
               {(
                 [
@@ -1067,6 +1067,8 @@ function App() {
               ).map((t) => (
                 <button
                   key={t.id}
+                  title={t.label}
+                  aria-label={t.label}
                   className={!timestampOpen && tool === t.id ? "chosen" : ""}
                   aria-pressed={!timestampOpen && tool === t.id}
                   disabled={busy}
@@ -1081,14 +1083,14 @@ function App() {
                       });
                   }}
                 >
-                  <t.icon size={16} />
-                  {t.label}
+                  <t.icon size={24} />
                 </button>
               ))}
               <button
                 className={timestampOpen ? "chosen" : ""}
                 aria-pressed={timestampOpen}
                 disabled={busy}
+                title="Timestamp"
                 aria-label="Timestamp overlay settings"
                 aria-expanded={timestampOpen}
                 onClick={() => {
@@ -1097,8 +1099,7 @@ function App() {
                   setTimestampOpen(!timestampOpen);
                 }}
               >
-                <IconClock size={16} />
-                Timestamp
+                <IconClock size={24} />
               </button>
             </div>
             </div>

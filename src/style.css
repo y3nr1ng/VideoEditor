@@ -2359,3 +2359,9 @@ input:not([type="range"]):not([type="checkbox"]), select { min-height: 36px; pad
   .crop-modal .crop-fields { flex-wrap: wrap; gap: var(--space-group); }
   .crop-field-group { flex-basis: calc(50% - 12px); }
 }
+
+.feature-buttons { display: flex; align-items: center; gap: 8px; height: var(--panel-header-height); min-height: var(--panel-header-height); padding: 0 12px; }
+.feature-buttons h2 { margin: 0; flex-shrink: 0; }
+.feature-buttons .tools { display: flex; flex-wrap: nowrap; gap: 4px; margin-left: auto; }
+.feature-buttons .tools button { flex: 0 0 40px; width: 40px; height: 40px; padding: 8px; min-height: 40px; }
+@media (max-width: 680px) { .timeline-panel { grid-template-columns: 240px minmax(0, 1fr); } .feature-buttons { padding: 0 8px; } }
