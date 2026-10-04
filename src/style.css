@@ -2254,3 +2254,22 @@ body,
 .crop-unit-toggle button { padding: 7px 9px; border: 1px solid #46556a; background: transparent; color: #aab9cc; }
 .crop-unit-toggle button[aria-pressed="true"] { background: #b3c7df; color: #26374b; }
 .crop-modal .modal-footer { justify-content: flex-end; }
+
+:root { --panel-header-height: 48px; }
+.resources-panel .panel-heading,
+.preview-panel .panel-heading,
+.timeline-panel .timeline-heading {
+  height: var(--panel-header-height);
+  min-height: var(--panel-header-height);
+  max-height: var(--panel-header-height);
+  padding: 0 12px;
+  align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+@media (max-width: 680px) {
+  :root { --panel-header-height: 66px; }
+  .resources-panel .panel-heading,
+  .preview-panel .panel-heading,
+  .timeline-panel .timeline-heading { padding: 6px; }
+}
