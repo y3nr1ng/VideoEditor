@@ -1067,7 +1067,8 @@ function App() {
               ).map((t) => (
                 <button
                   key={t.id}
-                  className={tool === t.id ? "chosen" : ""}
+                  className={!timestampOpen && tool === t.id ? "chosen" : ""}
+                  aria-pressed={!timestampOpen && tool === t.id}
                   disabled={busy}
                   onClick={() => {
                     setTool(t.id);
@@ -1085,7 +1086,8 @@ function App() {
                 </button>
               ))}
               <button
-                className={timestamp.enabled ? "chosen" : ""}
+                className={timestampOpen ? "chosen" : ""}
+                aria-pressed={timestampOpen}
                 disabled={busy}
                 aria-label="Timestamp overlay settings"
                 aria-expanded={timestampOpen}
