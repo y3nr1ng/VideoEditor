@@ -566,7 +566,7 @@ function App() {
       else add(r);
     } else if (!r)
       notify(
-        "Drop a video or audio file from Finder, or use Import to choose it.",
+        "Drop a video or audio file from Finder.",
       );
   }
   function add(r: Resource) {
@@ -783,13 +783,6 @@ function App() {
                   </button>
                 ))}
               </div>
-              <button
-                className="small-button"
-                onClick={() => fileInput.current?.click()}
-                disabled={loading || busy}
-              >
-                <IconPlus size={16} /> Import
-              </button>
             </div>
           </div>
           <input
