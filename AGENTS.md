@@ -42,3 +42,4 @@
 - Use the shared `--radius-ui` (3px) for all buttons and rectangular interface surfaces; do not introduce separate radius rules for individual controls. Circular decorative markers can remain circular.
 - Media Library, Preview, and Timeline headers share `--panel-header-height` (48px desktop, 66px narrow viewport), with consistent vertical alignment.
 - Refer to trim, speed, zoom, and timestamp as features. Feature buttons sit in a left sidebar spanning timeline height, with settings below. Selecting applied speed/zoom intervals loads their settings for updating; X deletes. Selected feature ranges display normally with areas outside dimmed.
+- Keep editor typography readable: 16px base/settings text, 14–16px main controls, and at least 12px secondary labels/metadata. Timestamp output font size remains independently configurable.

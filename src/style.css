@@ -15,7 +15,7 @@
     sans-serif;
   color: #e8ecf2;
   background: #12161c;
-  font-size: 13px;
+  font-size: 16px;
   font-synthesis: none;
   color-scheme: dark;
 }
@@ -102,7 +102,7 @@ input[type="checkbox"] {
   background: #282c32;
   padding: 7px 10px;
   border-radius: var(--radius-ui);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 550;
 }
 .small-button:hover {
@@ -142,7 +142,7 @@ input[type="checkbox"] {
   flex-shrink: 0;
 }
 h2 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 650;
   margin: 0;
   display: flex;
@@ -151,7 +151,7 @@ h2 {
   letter-spacing: -0.2px;
 }
 .panel-heading p {
-  font-size: 11px;
+  font-size: 12px;
   color: #92969c;
   margin: 6px 0 0;
   max-width: 430px;
@@ -160,7 +160,7 @@ h2 {
   white-space: nowrap;
 }
 .count {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: #aeb2b8;
   background: #32363c;
@@ -208,15 +208,15 @@ h2 {
   margin-bottom: 5px;
 }
 .upload-zone strong {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 550;
 }
 .upload-zone > span:not(.upload-icon) {
-  font-size: 11px;
+  font-size: 12px;
   color: #9ea2a8;
 }
 .upload-zone small {
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.3px;
   color: #7c8086;
   margin-top: 9px;
@@ -232,16 +232,16 @@ h2 {
 }
 .library-empty p {
   margin: 10px 0 5px;
-  font-size: 12px;
+  font-size: 14px;
 }
 .library-empty span {
-  font-size: 11px;
+  font-size: 12px;
   color: #73777d;
 }
 .library-label {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.1px;
   color: #93979d;
   margin: 20px 0 12px;
@@ -293,7 +293,7 @@ h2 {
   background: #15191fd9;
   border-radius: var(--radius-ui);
   padding: 2px 4px;
-  font-size: 9px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 .kind-tag {
@@ -306,7 +306,7 @@ h2 {
   padding: 3px;
 }
 .resource-name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 550;
   padding: 8px 3px 4px;
   overflow: hidden;
@@ -318,7 +318,7 @@ h2 {
   align-items: center;
   justify-content: space-between;
   color: #90949a;
-  font-size: 9px;
+  font-size: 12px;
   padding: 0 3px 2px;
 }
 .resource-meta button {
@@ -328,7 +328,7 @@ h2 {
   padding: 2px;
 }
 .crop-label {
-  font-size: 9px;
+  font-size: 12px;
   color: #b3c7df;
   padding: 3px;
 }
@@ -337,7 +337,7 @@ h2 {
   flex-direction: column;
 }
 .subtle-label {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 500;
   color: #83878d;
   letter-spacing: 1px;
@@ -350,7 +350,7 @@ h2 {
   border: 1px solid #41454b;
   padding: 5px 8px;
   border-radius: var(--radius-ui);
-  font-size: 10px;
+  font-size: 12px;
   color: #a6aab0;
 }
 .preview-space {
@@ -397,19 +397,19 @@ h2 {
   margin-bottom: 10px;
 }
 .preview-empty strong {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #c8ccd2;
 }
 .preview-empty > span {
-  font-size: 11px;
+  font-size: 12px;
   color: #7b7f85;
 }
 .preview-resolution {
   position: absolute;
   right: 10px;
   bottom: 8px;
-  font-size: 9px;
+  font-size: 12px;
   color: #92969c;
   background: #11151ba6;
   padding: 3px 5px;
@@ -433,7 +433,7 @@ h2 {
 }
 .timecode {
   font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: 12px;
   color: #b3c7df;
   font-variant-numeric: tabular-nums;
   min-width: 150px;
@@ -486,7 +486,7 @@ h2 {
   border-radius: var(--radius-ui);
   padding: 7px 12px;
   color: #979ba1;
-  font-size: 11px;
+  font-size: 12px;
 }
 .tools button.chosen {
   background: #3b3f45;
@@ -529,11 +529,11 @@ h2 {
   color: #a2a6ac;
 }
 .track-labels span {
-  font-size: 11px;
+  font-size: 12px;
   color: #c8ccd2;
 }
 .track-labels small {
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 1.2px;
   color: #72767c;
   display: block;
@@ -561,7 +561,7 @@ h2 {
   position: absolute;
   top: 14px;
   font-family: ui-monospace, monospace;
-  font-size: 9px;
+  font-size: 12px;
   color: #82868c;
   transform: translateX(-50%);
 }
@@ -590,7 +590,7 @@ h2 {
   justify-content: center;
   gap: 8px;
   color: #61656b;
-  font-size: 11px;
+  font-size: 12px;
   border: 1px dashed #41454b;
   margin: 7px;
   height: calc(100% - 14px);
@@ -633,7 +633,7 @@ h2 {
   left: 14px;
   top: 5px;
   white-space: nowrap;
-  font-size: 9px;
+  font-size: 12px;
   text-shadow: 0 1px 3px #000;
   background: #15191f88;
   padding: 3px 4px;
@@ -680,7 +680,7 @@ h2 {
   min-height: 3px;
 }
 .waveform > span {
-  font-size: 10px;
+  font-size: 12px;
 }
 .effect-range {
   position: absolute;
@@ -689,7 +689,7 @@ h2 {
   overflow: hidden;
   white-space: nowrap;
   text-align: center;
-  font-size: 9px;
+  font-size: 12px;
   color: #1e2228;
   background: #dbdfe5e0;
   pointer-events: none;
@@ -747,7 +747,7 @@ h2 {
   max-width: 250px;
 }
 .inspector-title strong {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -756,7 +756,7 @@ h2 {
 }
 .inspector-title > span:last-child {
   color: #898d93;
-  font-size: 10px;
+  font-size: 12px;
   white-space: nowrap;
 }
 .selection-dot {
@@ -771,7 +771,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 10px;
+  font-size: 12px;
   color: #9ca0a6;
   flex-wrap: wrap;
 }
@@ -785,11 +785,11 @@ h2 {
 .effect-fields input {
   width: 62px;
   font-family: ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 12px;
   padding: 5px;
 }
 .effect-fields select {
-  font-size: 10px;
+  font-size: 12px;
   padding: 6px;
 }
 .effect-fields label input[aria-label*="percent"] {
@@ -797,7 +797,7 @@ h2 {
 }
 .inspector-tip {
   color: #6e7278;
-  font-size: 10px;
+  font-size: 12px;
   margin-left: 5px;
 }
 .delete {
@@ -809,7 +809,7 @@ h2 {
   flex-wrap: wrap;
 }
 .effect-list button {
-  font-size: 9px;
+  font-size: 12px;
   padding: 4px 6px;
   border: 1px solid #5a5e64;
   background: #2f3339;
@@ -821,7 +821,7 @@ h2 {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .timeline-foot {
   display: flex;
@@ -831,7 +831,7 @@ h2 {
   padding: 12px 20px;
   border-top: 1px solid #363a40;
   color: #7c8086;
-  font-size: 9px;
+  font-size: 12px;
 }
 .timeline-foot > span {
   display: flex;
@@ -842,7 +842,7 @@ kbd {
   border: 1px solid #484c52;
   border-radius: var(--radius-ui);
   padding: 2px 4px;
-  font-size: 8px;
+  font-size: 12px;
   margin-left: 10px;
   color: #9ea2a8;
 }
@@ -862,7 +862,7 @@ kbd {
   box-shadow: 0 8px 40px #0008;
   max-width: min(680px, 90vw);
   z-index: 50;
-  font-size: 12px;
+  font-size: 14px;
 }
 .toast button {
   margin-left: 12px;
@@ -905,13 +905,13 @@ kbd {
   letter-spacing: -0.5px;
 }
 .modal-heading p {
-  font-size: 12px;
+  font-size: 14px;
   color: #979ba1;
   margin: 8px 0 0;
 }
 .field-label {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 1.3px;
   color: #989ca2;
   margin-bottom: 10px;
@@ -947,19 +947,19 @@ kbd {
 }
 .format-option strong {
   font-weight: 600;
-  font-size: 13px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 .format-option strong > span {
   font-weight: 400;
-  font-size: 10px;
+  font-size: 12px;
   color: #989ca2;
 }
 .ppt-badge {
   font-style: normal;
-  font-size: 8px;
+  font-size: 12px;
   letter-spacing: 0.8px;
   border: 1px solid #878b91;
   padding: 3px 5px;
@@ -967,7 +967,7 @@ kbd {
   border-radius: var(--radius-ui);
 }
 .format-option p {
-  font-size: 11px;
+  font-size: 12px;
   color: #92969c;
   margin: 5px 0 0;
 }
@@ -982,7 +982,7 @@ kbd {
   margin: 23px 0;
 }
 .export-settings label {
-  font-size: 11px;
+  font-size: 12px;
   color: #bfc3c9;
 }
 .export-settings select {
@@ -1000,7 +1000,7 @@ kbd {
   display: block;
   margin-top: 6px;
   color: #81858b;
-  font-size: 10px;
+  font-size: 12px;
 }
 .export-summary {
   display: flex;
@@ -1009,10 +1009,10 @@ kbd {
   border-radius: var(--radius-ui);
   padding: 11px;
   color: #9ea2a8;
-  font-size: 10px;
+  font-size: 12px;
 }
 .modal-note {
-  font-size: 11px;
+  font-size: 12px;
   color: #92969c;
   line-height: 1.7;
   display: flex;
@@ -1044,11 +1044,11 @@ kbd {
   align-items: center;
   gap: 8px;
   color: #c2c6cc;
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 10px;
 }
 .success {
-  font-size: 12px;
+  font-size: 14px;
   color: #b3c7df;
   display: flex;
   align-items: center;
@@ -1110,7 +1110,7 @@ kbd {
   margin-top: 20px;
 }
 .crop-fields label {
-  font-size: 10px;
+  font-size: 12px;
   color: #adb1b7;
 }
 .crop-fields input {
@@ -1121,7 +1121,7 @@ kbd {
 .help-copy {
   line-height: 1.8;
   color: #b1b5bb;
-  font-size: 12px;
+  font-size: 14px;
 }
 .help-copy p {
   margin: 0 0 16px;
@@ -1236,7 +1236,7 @@ kbd {
     gap: 6px;
   }
   .track-labels small {
-    font-size: 7px;
+    font-size: 12px;
   }
   .timeline-foot {
     padding: 10px;
@@ -1255,13 +1255,13 @@ kbd {
   }
   .timecode {
     min-width: 110px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .modal {
     padding: 18px;
   }
   .modal-heading h2 {
-    font-size: 18px;
+    font-size: 20px;
   }
   .export-settings {
     flex-wrap: wrap;
@@ -1315,7 +1315,7 @@ kbd {
   }
   .preview-actions .primary {
     padding: 8px;
-    font-size: 11px;
+    font-size: 12px;
   }
   .preview-ratio {
     display: none;
@@ -1338,7 +1338,7 @@ kbd {
   gap: 12px;
   align-items: center;
   height: 24px;
-  font-size: 10px;
+  font-size: 12px;
   color: #8999ac;
 }
 .source-editor-heading strong {
@@ -1397,7 +1397,7 @@ kbd {
   background: #172130cc;
   border: 0;
   padding: 3px 5px;
-  font-size: 9px;
+  font-size: 12px;
   color: #c5d6e9;
 }
 .source-handle {
@@ -1433,7 +1433,7 @@ kbd {
   right: 0;
   top: 62px;
   pointer-events: none;
-  font-size: 9px;
+  font-size: 12px;
   color: #8e9eb1;
   font-family: ui-monospace, monospace;
 }
@@ -1451,7 +1451,7 @@ kbd {
   display: flex;
   gap: 10px;
   align-items: center;
-  font-size: 10px;
+  font-size: 12px;
   color: #91a3ba;
   height: 32px;
 }
@@ -1463,19 +1463,19 @@ kbd {
 .source-editor-controls input {
   width: 60px;
   padding: 4px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .source-editor-controls select {
   padding: 4px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .source-editor-controls .small-button {
   padding: 5px 7px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .source-editor-controls > span {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 12px;
 }
 .track-labels > div.source-track-label {
   height: 175px;
@@ -1485,7 +1485,7 @@ kbd {
   border-top: 1px solid #485565;
 }
 .source-track-label span {
-  font-size: 10px;
+  font-size: 12px;
 }
 .source-track-label small {
   max-width: 90px;
@@ -1544,13 +1544,13 @@ kbd {
   gap: 7px;
 }
 .library-view-small .resource-name {
-  font-size: 10px;
+  font-size: 12px;
   padding: 6px 2px 3px;
 }
 .library-view-small .resource-meta {
   flex-wrap: wrap;
   gap: 3px;
-  font-size: 8px;
+  font-size: 12px;
 }
 .library-view-small .kind-tag {
   padding: 2px;
@@ -1575,7 +1575,7 @@ kbd {
 .library-view-details .resource-name {
   grid-column: 2;
   padding: 3px 0;
-  font-size: 11px;
+  font-size: 12px;
 }
 .library-view-details .resource-meta {
   grid-column: 2;
@@ -1636,7 +1636,7 @@ kbd {
   bottom: 3px;
   padding: 2px 4px;
   background: #18202acc;
-  font-size: 9px;
+  font-size: 12px;
   color: #d0dfef;
   pointer-events: none;
 }
@@ -1732,7 +1732,7 @@ body,
   margin-bottom: 0;
 }
 .preview-empty strong {
-  font-size: 12px;
+  font-size: 14px;
 }
 .preview-panel .panel-heading {
   padding: 10px 12px;
@@ -1773,10 +1773,10 @@ body,
     padding: 8px;
   }
   .resources-panel h2 {
-    font-size: 11px;
+    font-size: 12px;
   }
   .count {
-    font-size: 8px;
+    font-size: 12px;
   }
   .library-actions {
     gap: 4px;
@@ -1788,7 +1788,7 @@ body,
   }
   .library-actions .small-button {
     padding: 5px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .library-scroll {
     padding: 6px;
@@ -1806,7 +1806,7 @@ body,
     display: none;
   }
   .upload-zone strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .resource-grid.library-view-large,
   .resource-grid.library-view-small {
@@ -1838,7 +1838,7 @@ body,
     width: 16px;
   }
   .preview-panel .panel-heading h2 {
-    font-size: 11px;
+    font-size: 12px;
   }
   .preview-panel .panel-heading {
     gap: 4px;
@@ -1853,7 +1853,7 @@ body,
   }
   .timecode {
     min-width: 0;
-    font-size: 9px;
+    font-size: 12px;
   }
   .playback-controls {
     gap: 6px;
@@ -1863,13 +1863,13 @@ body,
     height: 26px;
   }
   .preview-empty strong {
-    font-size: 10px;
+    font-size: 12px;
   }
   .preview-empty > span {
-    font-size: 9px;
+    font-size: 12px;
   }
   .preview-resolution {
-    font-size: 8px;
+    font-size: 12px;
   }
   .timeline-heading {
     height: auto;
@@ -1947,7 +1947,7 @@ body,
   gap: 9px;
   padding: 7px 12px;
   border-bottom: 1px solid #3e4856;
-  font-size: 10px;
+  font-size: 12px;
   color: #a4b4c9;
   max-height: 88px;
   overflow: auto;
@@ -1964,7 +1964,7 @@ body,
 }
 .timestamp-controls select {
   padding: 4px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .timestamp-controls input[type="checkbox"] {
   width: 13px;
@@ -1972,7 +1972,7 @@ body,
 }
 .timestamp-controls > span {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 12px;
 }
 .timestamp-track {
   position: relative;
@@ -2004,10 +2004,10 @@ body,
 }
 .track-labels > div.timestamp-track-label {
   height: 43px;
-  font-size: 10px;
+  font-size: 12px;
 }
 .timestamp-track-label span {
-  font-size: 10px;
+  font-size: 12px;
 }
 .preview-canvas {
   object-fit: contain;
@@ -2025,7 +2025,7 @@ body,
   }
   .tools button {
     padding: 6px;
-    font-size: 10px;
+    font-size: 12px;
   }
   .timeline-heading {
     gap: 4px;
@@ -2071,7 +2071,7 @@ body,
     max-width: 30%;
   }
   .source-mode {
-    font-size: 9px;
+    font-size: 12px;
   }
   .source-editor-controls {
     gap: 5px;
@@ -2135,7 +2135,7 @@ body,
   animation: drop-hint-rise 0.14s ease-out;
 }
 .floating-drop-hint strong {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
 }
 @keyframes drop-hint-rise {
@@ -2223,12 +2223,12 @@ body,
 
 .library-view-details .resource-card { grid-template-columns: 100px minmax(0, 1fr) auto; position: relative; }
 .library-view-details .resource-meta { display: contents; }
-.library-view-details .resource-meta > span { grid-column: 2; font-size: 10px; }
+.library-view-details .resource-meta > span { grid-column: 2; font-size: 12px; }
 .library-view-details .resource-crop-button { grid-column: 3; grid-row: 1 / span 3; display: flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; padding: 8px; }
 .crop-transport { margin: 12px 0; }
 .crop-transport input { width: 100%; }
 .crop-playback { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.crop-playback span { font-size: 11px; color: #aab9cc; font-variant-numeric: tabular-nums; }
+.crop-playback span { font-size: 12px; color: #aab9cc; font-variant-numeric: tabular-nums; }
 
 .crop-resize { padding: 0; z-index: 2; }
 .crop-resize-nw { top: -3px; left: -3px; cursor: nwse-resize; }
@@ -2240,12 +2240,12 @@ body,
 .crop-resize-sw { bottom: -3px; left: -3px; cursor: nesw-resize; }
 .crop-resize-w { top: 50%; left: -3px; transform: translateY(-50%); cursor: ew-resize; }
 
-.kind-tag { padding: 3px 5px; font-size: 9px; font-weight: 600; line-height: 1.2; letter-spacing: .3px; }
+.kind-tag { padding: 3px 5px; font-size: 12px; font-weight: 600; line-height: 1.2; letter-spacing: .3px; }
 
 .crop-source { position: relative; width: 100%; height: 100%; }
-.crop-modal { font-size: 14px; }
-.crop-modal .modal-heading h2 { font-size: 18px; }
-.crop-modal .crop-playback span, .crop-modal .crop-fields label, .crop-modal input, .crop-modal button { font-size: 14px; }
+.crop-modal { font-size: 16px; }
+.crop-modal .modal-heading h2 { font-size: 20px; }
+.crop-modal .crop-playback span, .crop-modal .crop-fields label, .crop-modal input, .crop-modal button { font-size: 16px; }
 .crop-modal .crop-fields { justify-content: flex-start; align-items: flex-end; gap: 22px; margin-top: 12px; }
 .crop-field-group { display: flex; gap: 8px; flex: 1; min-width: 0; }
 .crop-field-group label { flex: 1; min-width: 0; }
@@ -2297,3 +2297,6 @@ body,
 @media (max-width: 680px) { .timeline-panel { grid-template-columns: 160px minmax(0, 1fr); } .feature-buttons, .feature-settings .inspector { padding: 8px; } }
 
 .feature-outside { position: absolute; top: 0; height: 100%; background: #11182088; pointer-events: none; }
+
+.feature-settings .effect-fields, .feature-settings .timestamp-controls { font-size: 16px; }
+.feature-settings .effect-fields input, .feature-settings .effect-fields select, .feature-buttons .tools button { font-size: 14px; }
