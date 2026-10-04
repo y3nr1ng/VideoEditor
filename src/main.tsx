@@ -1271,11 +1271,6 @@ function App() {
           <div className="inspector" hidden={timestampOpen || !selectedClip || !selectedRes}>
             {selectedClip && selectedRes ? (
               <>
-                <div className="inspector-title">
-                  <span className="selection-dot" />
-                  <strong title={selectedRes.name}>{selectedRes.name}</strong>
-                  <span>{time(duration(selectedClip))}</span>
-                </div>
                 {tool === "trim" ? (
                   <div className="effect-fields">
                     <span>Trim</span>

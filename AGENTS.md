@@ -44,3 +44,4 @@
 - Refer to trim, speed, zoom, and timestamp as features. Feature buttons sit in a left sidebar spanning timeline height, with settings below. Selecting applied speed/zoom intervals loads their settings for updating; X deletes. Selected feature ranges display normally with areas outside dimmed.
 - Use exactly three interface font-size tokens: `--text-small` (12px) for secondary metadata, `--text-normal` (16px) for body/settings/controls, and `--text-large` (20px) for main headings. Keep those levels at every viewport size. Align padding/gaps and control heights with their line boxes. Timestamp output font size remains independently configurable.
 - Feature button selection indicates the active settings panel, independently of whether an effect or timestamp is enabled; highlight only one feature at a time.
+- Do not repeat the selected resource filename in the left feature settings panel; the source row already identifies it.
