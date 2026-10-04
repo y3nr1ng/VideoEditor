@@ -4,14 +4,11 @@ export type TimestampOverlay = {
   start: number;
   end: number;
   placement:
-    | "top-left"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-right"
-    | "bottom-center";
+    "top-left" | "top-right" | "bottom-left" | "bottom-right" | "bottom-center";
   fontSize: number;
   fontFamily: "sans" | "mono" | "serif";
   bold: boolean;
+  italic?: boolean;
   background: boolean;
 };
 export const defaultTimestamp: TimestampOverlay = {
@@ -43,7 +40,7 @@ export const timestampFonts = {
   },
 };
 export function timestampFontURL(config: TimestampOverlay) {
-  return `fonts/${timestampFonts[config.fontFamily].file}-${config.bold ? "Bold" : "Regular"}.ttf`;
+  return `fonts/${timestampFonts[config.fontFamily].file}-${config.italic ? (config.bold ? "BoldItalic" : "Italic") : config.bold ? "Bold" : "Regular"}.ttf`;
 }
 export function timestampText(seconds: number) {
   const t = Math.max(0, Math.floor(seconds));
@@ -103,7 +100,7 @@ export function drawTimestamp(
   const { width, height } = ctx.canvas,
     { fontSize, margin, boxPad } = timestampMetrics(config, height);
   ctx.save();
-  ctx.font = `${config.bold ? 700 : 400} ${fontSize}px "${timestampFonts[config.fontFamily].family}", ${config.fontFamily === "mono" ? "monospace" : config.fontFamily === "serif" ? "serif" : "sans-serif"}`;
+  ctx.font = `${config.italic ? "italic " : ""}${config.bold ? 700 : 400} ${fontSize}px "${timestampFonts[config.fontFamily].family}", ${config.fontFamily === "mono" ? "monospace" : config.fontFamily === "serif" ? "serif" : "sans-serif"}`;
   ctx.textBaseline = "top";
   const text = timestampText(t),
     metrics = ctx.measureText(text),
