@@ -80,6 +80,7 @@ function App() {
     [position, setPosition] = useState(0),
     [playing, setPlaying] = useState(false),
     [muted, setMuted] = useState(false),
+    [featureId, setFeatureId] = useState<string | null>(null),
     [tool, setTool] = useState<"trim" | "speed" | "zoom">("trim"),
     [range, setRange] = useState({ start: 0, end: 0 }),
     [rate, setRate] = useState(2),
@@ -411,6 +412,7 @@ function App() {
     setPlaying((p) => !p);
   }
   function select(c: Clip) {
+    setFeatureId(null);
     setSelected(c.id);
     setActiveResource(c.resourceId);
     const first = keptRanges(c)[0];
@@ -606,6 +608,17 @@ function App() {
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
   }
+  function selectFeature(c: Clip, mode: "speed" | "zoom", id: string) {
+    select(c);
+    setTool(mode);
+    setTimestampOpen(false);
+    setFeatureId(id);
+    const effect = mode === "speed" ? c.speeds.find((s) => s.id === id) : c.zooms.find((s) => s.id === id);
+    if (!effect) return;
+    setRange({ start: effect.start, end: effect.end });
+    if ("rate" in effect) setRate(effect.rate);
+    else { setZoomFrom(effect.from); setZoomTo(effect.to); setZoomX(effect.x); setZoomY(effect.y); }
+  }
   function applyEffect() {
     if (tool === "trim" || busy) return;
     if (!selectedClip || !validateRange(range.start, range.end, selectedClip)) {
@@ -615,7 +628,7 @@ function App() {
     if (tool === "speed") {
       if (
         selectedClip.speeds.some(
-          (s) => range.start < s.end && range.end > s.start,
+          (s) => s.id !== featureId && range.start < s.end && range.end > s.start,
         )
       ) {
         notify("Speed ranges cannot overlap. Remove the existing range first.");
@@ -623,13 +636,13 @@ function App() {
       }
       updateClip(selectedClip.id, (c) => ({
         ...c,
-        speeds: [...c.speeds, { id: uid(), ...range, rate }],
+        speeds: [...c.speeds.filter((s) => s.id !== featureId), { id: featureId ?? uid(), ...range, rate }],
       }));
     } else {
       if (selectedRes?.kind !== "video") return;
       if (
         selectedClip.zooms.some(
-          (s) => range.start < s.end && range.end > s.start,
+          (s) => s.id !== featureId && range.start < s.end && range.end > s.start,
         )
       ) {
         notify("Zoom ranges cannot overlap. Remove the existing range first.");
@@ -638,9 +651,9 @@ function App() {
       updateClip(selectedClip.id, (c) => ({
         ...c,
         zooms: [
-          ...c.zooms,
+          ...c.zooms.filter((z) => z.id !== featureId),
           {
-            id: uid(),
+            id: featureId ?? uid(),
             ...range,
             from: zoomFrom,
             to: zoomTo,
@@ -1042,17 +1055,14 @@ function App() {
           </div>
         </section>
         <section className="timeline-panel panel">
-          <div className="timeline-heading">
-            <div className="flex items-center gap-3">
-              <h2>Timeline</h2>
-              <span className="count">{clips.length + audio.length} clips</span>
-            </div>
+          <aside className="feature-sidebar" aria-label="Features">
+            <div className="feature-buttons"><h2>Features</h2>
             <div className="tools">
               {(
                 [
                   { id: "trim", label: "Trim", icon: IconCut },
-                  { id: "speed", label: "Speed range", icon: IconGauge },
-                  { id: "zoom", label: "Zoom range", icon: IconZoomIn },
+                  { id: "speed", label: "Speed", icon: IconGauge },
+                  { id: "zoom", label: "Zoom", icon: IconZoomIn },
                 ] as const
               ).map((t) => (
                 <button
@@ -1061,6 +1071,8 @@ function App() {
                   disabled={busy}
                   onClick={() => {
                     setTool(t.id);
+                    setFeatureId(null);
+                    setTimestampOpen(false);
                     if (selectedClip)
                       setRange({
                         start: keptRanges(selectedClip)[0].start,
@@ -1087,20 +1099,8 @@ function App() {
                 Timestamp
               </button>
             </div>
-            <div className="timeline-zoom">
-              <span>−</span>
-              <input
-                aria-label="Timeline zoom"
-                type="range"
-                min="1"
-                max="5"
-                step=".25"
-                value={timelineScale}
-                onChange={(e) => setTimelineScale(+e.target.value)}
-              />
-              <IconPlus size={13} />
             </div>
-          </div>
+            <div className="feature-settings">
           {timestampOpen && (
             <div className="timestamp-controls" aria-label="Timestamp settings">
               <label>
@@ -1266,6 +1266,180 @@ function App() {
               </button>
             </div>
           )}
+          <div className="inspector" hidden={timestampOpen || !selectedClip || !selectedRes}>
+            {selectedClip && selectedRes ? (
+              <>
+                <div className="inspector-title">
+                  <span className="selection-dot" />
+                  <strong title={selectedRes.name}>{selectedRes.name}</strong>
+                  <span>{time(duration(selectedClip))}</span>
+                </div>
+                {tool === "trim" ? (
+                  <div className="effect-fields">
+                    <span>Trim</span>
+                    <span>{time(range.start)}–{time(range.end)}</span>
+                  </div>
+                ) : (
+                  <div className="effect-fields">
+                    <label>
+                      From
+                      <input
+                        aria-label="Effect start seconds"
+                        type="number"
+                        step=".1"
+                        value={+range.start.toFixed(2)}
+                        onChange={(e) =>
+                          setRange({ ...range, start: +e.target.value })
+                        }
+                      />
+                      s
+                    </label>
+                    <label>
+                      To
+                      <input
+                        aria-label="Effect end seconds"
+                        type="number"
+                        step=".1"
+                        value={+range.end.toFixed(2)}
+                        onChange={(e) =>
+                          setRange({ ...range, end: +e.target.value })
+                        }
+                      />
+                      s
+                    </label>
+                    {tool === "speed" ? (
+                      <select
+                        aria-label="Range playback speed"
+                        value={rate}
+                        onChange={(e) => setRate(+e.target.value)}
+                      >
+                        {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4].map((r) => (
+                          <option key={r} value={r}>
+                            {r}×{" "}
+                            {r < 1 ? "slower" : r > 1 ? "faster" : "normal"}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <>
+                        <select
+                          aria-label="Starting zoom"
+                          value={zoomFrom}
+                          onChange={(e) => setZoomFrom(+e.target.value)}
+                        >
+                          {[1, 1.25, 1.5, 2, 3].map((z) => (
+                            <option key={z} value={z}>
+                              {z}× start
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          aria-label="Ending zoom"
+                          value={zoomTo}
+                          onChange={(e) => setZoomTo(+e.target.value)}
+                        >
+                          {[1, 1.25, 1.5, 2, 3].map((z) => (
+                            <option key={z} value={z}>
+                              {z}× end
+                            </option>
+                          ))}
+                        </select>
+                        <label>
+                          X
+                          <input
+                            aria-label="Zoom center X percent"
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={zoomX}
+                            onChange={(e) =>
+                              setZoomX(clamp(+e.target.value, 0, 100))
+                            }
+                          />
+                          %
+                        </label>
+                        <label>
+                          Y
+                          <input
+                            aria-label="Zoom center Y percent"
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={zoomY}
+                            onChange={(e) =>
+                              setZoomY(clamp(+e.target.value, 0, 100))
+                            }
+                          />
+                          %
+                        </label>
+                      </>
+                    )}
+                    <button
+                      className="small-button accent"
+                      disabled={
+                        busy ||
+                        (tool === "zoom" && selectedRes.kind !== "video")
+                      }
+                      onClick={applyEffect}
+                    >
+                      {featureId ? "Update feature" : "Apply feature"}
+                    </button>
+                  </div>
+                )}
+                <button
+                  className="icon-button delete"
+                  aria-label="Remove selected clip"
+                  disabled={busy}
+                  onClick={() => removeClip()}
+                >
+                  <IconTrash size={17} />
+                </button>
+                <div className="effect-list">
+                  {tool === "speed" &&
+                    selectedClip.speeds.map((s) => (
+                      <button
+                        key={s.id}
+                        disabled={busy}
+                        onClick={() => selectFeature(selectedClip, "speed", s.id)}
+                      >
+                        {time(s.start)}–{time(s.end)} · {s.rate}×{" "}
+                      </button>
+                    ))}
+                  {tool === "zoom" &&
+                    selectedClip.zooms.map((s) => (
+                      <button
+                        key={s.id}
+                        disabled={busy}
+                        onClick={() => selectFeature(selectedClip, "zoom", s.id)}
+                      >
+                        {time(s.start)}–{time(s.end)} · {s.from}→{s.to}×{" "}
+                      </button>
+                    ))}
+                </div>
+              </>
+            ) : null}
+          </div>
+            </div>
+          </aside>
+          <div className="timeline-heading">
+            <div className="flex items-center gap-3">
+              <h2>Timeline</h2>
+              <span className="count">{clips.length + audio.length} clips</span>
+            </div>
+            <div className="timeline-zoom">
+              <span>−</span>
+              <input
+                aria-label="Timeline zoom"
+                type="range"
+                min="1"
+                max="5"
+                step=".25"
+                value={timelineScale}
+                onChange={(e) => setTimelineScale(+e.target.value)}
+              />
+              <IconPlus size={13} />
+            </div>
+          </div>
           <div className="timeline-scroll">
             <div className="track-labels">
               <div className="ruler-spacer" />
@@ -1481,7 +1655,16 @@ function App() {
                       disabled={busy}
                       range={range}
                       onRange={setRange}
-                      onChange={(next) => updateClip(next.id, () => next)}
+                      onSelectFeature={(mode, id) => selectFeature(selectedClip, mode, id)}
+                      onChange={(next) => {
+                        updateClip(next.id, () => next);
+                        if (tool === "trim") {
+                          const retained = keptRanges(next);
+                          const active = retained.find((r) => r.start <= range.start && r.end >= range.end) ?? retained[0];
+                          setRange({ start: active.start, end: active.end });
+                        }
+                        if (featureId && ![...next.speeds, ...next.zooms].some((f) => f.id === featureId)) setFeatureId(null);
+                      }}
                       onSeek={(sourceTime) => {
                         setPlaying(false);
                         seek(
@@ -1537,170 +1720,6 @@ function App() {
                 />
               </div>
             </div>
-          </div>
-          <div className="inspector" hidden={!selectedClip || !selectedRes}>
-            {selectedClip && selectedRes ? (
-              <>
-                <div className="inspector-title">
-                  <span className="selection-dot" />
-                  <strong title={selectedRes.name}>{selectedRes.name}</strong>
-                  <span>{time(duration(selectedClip))}</span>
-                </div>
-                {tool === "trim" ? (
-                  <span className="inspector-tip">
-                    Edit retained ranges in the full-source row above.
-                  </span>
-                ) : (
-                  <div className="effect-fields">
-                    <label>
-                      From
-                      <input
-                        aria-label="Effect start seconds"
-                        type="number"
-                        step=".1"
-                        value={+range.start.toFixed(2)}
-                        onChange={(e) =>
-                          setRange({ ...range, start: +e.target.value })
-                        }
-                      />
-                      s
-                    </label>
-                    <label>
-                      To
-                      <input
-                        aria-label="Effect end seconds"
-                        type="number"
-                        step=".1"
-                        value={+range.end.toFixed(2)}
-                        onChange={(e) =>
-                          setRange({ ...range, end: +e.target.value })
-                        }
-                      />
-                      s
-                    </label>
-                    {tool === "speed" ? (
-                      <select
-                        aria-label="Range playback speed"
-                        value={rate}
-                        onChange={(e) => setRate(+e.target.value)}
-                      >
-                        {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4].map((r) => (
-                          <option key={r} value={r}>
-                            {r}×{" "}
-                            {r < 1 ? "slower" : r > 1 ? "faster" : "normal"}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <>
-                        <select
-                          aria-label="Starting zoom"
-                          value={zoomFrom}
-                          onChange={(e) => setZoomFrom(+e.target.value)}
-                        >
-                          {[1, 1.25, 1.5, 2, 3].map((z) => (
-                            <option key={z} value={z}>
-                              {z}× start
-                            </option>
-                          ))}
-                        </select>
-                        <select
-                          aria-label="Ending zoom"
-                          value={zoomTo}
-                          onChange={(e) => setZoomTo(+e.target.value)}
-                        >
-                          {[1, 1.25, 1.5, 2, 3].map((z) => (
-                            <option key={z} value={z}>
-                              {z}× end
-                            </option>
-                          ))}
-                        </select>
-                        <label>
-                          X
-                          <input
-                            aria-label="Zoom center X percent"
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={zoomX}
-                            onChange={(e) =>
-                              setZoomX(clamp(+e.target.value, 0, 100))
-                            }
-                          />
-                          %
-                        </label>
-                        <label>
-                          Y
-                          <input
-                            aria-label="Zoom center Y percent"
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={zoomY}
-                            onChange={(e) =>
-                              setZoomY(clamp(+e.target.value, 0, 100))
-                            }
-                          />
-                          %
-                        </label>
-                      </>
-                    )}
-                    <button
-                      className="small-button accent"
-                      disabled={
-                        busy ||
-                        (tool === "zoom" && selectedRes.kind !== "video")
-                      }
-                      onClick={applyEffect}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                )}
-                <button
-                  className="icon-button delete"
-                  aria-label="Remove selected clip"
-                  disabled={busy}
-                  onClick={() => removeClip()}
-                >
-                  <IconTrash size={17} />
-                </button>
-                <div className="effect-list">
-                  {tool === "speed" &&
-                    selectedClip.speeds.map((s) => (
-                      <button
-                        key={s.id}
-                        disabled={busy}
-                        onClick={() =>
-                          updateClip(selectedClip.id, (c) => ({
-                            ...c,
-                            speeds: c.speeds.filter((x) => x.id !== s.id),
-                          }))
-                        }
-                      >
-                        {time(s.start)}–{time(s.end)} · {s.rate}×{" "}
-                        <IconX size={12} />
-                      </button>
-                    ))}
-                  {tool === "zoom" &&
-                    selectedClip.zooms.map((s) => (
-                      <button
-                        key={s.id}
-                        disabled={busy}
-                        onClick={() =>
-                          updateClip(selectedClip.id, (c) => ({
-                            ...c,
-                            zooms: c.zooms.filter((x) => x.id !== s.id),
-                          }))
-                        }
-                      >
-                        {time(s.start)}–{time(s.end)} · {s.from}→{s.to}×{" "}
-                        <IconX size={12} />
-                      </button>
-                    ))}
-                </div>
-              </>
-            ) : null}
           </div>
           <footer className="timeline-foot">
             <span>

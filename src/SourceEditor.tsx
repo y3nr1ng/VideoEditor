@@ -30,6 +30,7 @@ type Props = {
   range: { start: number; end: number };
   onRange: (range: { start: number; end: number }) => void;
   onChange: (clip: Clip) => void;
+  onSelectFeature?: (mode: "speed" | "zoom", id: string) => void;
   onSeek: (time: number) => void;
 };
 export function SourceEditor({
@@ -41,6 +42,7 @@ export function SourceEditor({
   onRange,
   onChange,
   onSeek,
+  onSelectFeature,
 }: Props) {
   const ranges = keptRanges(clip);
   const [activeId, setActiveId] = useState(ranges[0].id),
@@ -320,6 +322,11 @@ export function SourceEditor({
               <div
                 key={effect.id}
                 className="source-feature speed-feature"
+                role="button" tabIndex={disabled ? -1 : 0}
+                aria-label={`Select speed feature ${time(effect.start)}–${time(effect.end)}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => !disabled && onSelectFeature?.("speed", effect.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!disabled) onSelectFeature?.("speed", effect.id); } }}
                 style={{
                   left: `${(effect.start / resource.duration) * 100}%`,
                   width: `${((effect.end - effect.start) / resource.duration) * 100}%`,
@@ -343,6 +350,11 @@ export function SourceEditor({
               <div
                 key={effect.id}
                 className="source-feature zoom-feature"
+                role="button" tabIndex={disabled ? -1 : 0}
+                aria-label={`Select zoom feature ${time(effect.start)}–${time(effect.end)}`}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => !disabled && onSelectFeature?.("zoom", effect.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!disabled) onSelectFeature?.("zoom", effect.id); } }}
                 style={{
                   left: `${(effect.start / resource.duration) * 100}%`,
                   width: `${((effect.end - effect.start) / resource.duration) * 100}%`,
@@ -363,9 +375,13 @@ export function SourceEditor({
                 />
               </div>
             ))}
+          {mode !== "trim" && selection && selection.end > selection.start && !(mode === "zoom" && resource.kind === "audio") && <>
+            <div className="feature-outside" style={{ left: 0, width: `${(selection.start / resource.duration) * 100}%` }} />
+            <div className="feature-outside" style={{ left: `${(selection.end / resource.duration) * 100}%`, right: 0 }} />
+          </>}
           {selection && selection.end > selection.start && !(mode === "zoom" && resource.kind === "audio") && (
             <div
-              className="source-draft"
+              className={"source-draft " + (mode !== "trim" ? "feature-selection" : "")}
               style={{
                 left: `${(selection.start / resource.duration) * 100}%`,
                 width: `${((selection.end - selection.start) / resource.duration) * 100}%`,

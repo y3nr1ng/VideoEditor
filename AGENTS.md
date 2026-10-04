@@ -41,3 +41,4 @@
 - Crop dialog uses the title “Crop the resource”, no subtitle/hint/reset, normal text sizing, compact Left/Top and Width/Height groups, and an always-selected %/px toggle. Wheel zoom ranges from full source to crop-fit view; units use original source dimensions and neither creates processed files.
 - Use the shared `--radius-ui` (3px) for all buttons and rectangular interface surfaces; do not introduce separate radius rules for individual controls. Circular decorative markers can remain circular.
 - Media Library, Preview, and Timeline headers share `--panel-header-height` (48px desktop, 66px narrow viewport), with consistent vertical alignment.
+- Refer to trim, speed, zoom, and timestamp as features. Feature buttons sit in a left sidebar spanning timeline height, with settings below. Selecting applied speed/zoom intervals loads their settings for updating; X deletes. Selected feature ranges display normally with areas outside dimmed.

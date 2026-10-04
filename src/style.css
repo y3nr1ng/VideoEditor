@@ -2273,3 +2273,27 @@ body,
   .preview-panel .panel-heading,
   .timeline-panel .timeline-heading { padding: 6px; }
 }
+.timeline-panel { display: grid; grid-template-columns: 230px minmax(0, 1fr); grid-template-rows: var(--panel-header-height) minmax(0, 1fr) auto; }
+.feature-sidebar { grid-column: 1; grid-row: 1 / -1; display: flex; flex-direction: column; min-height: 0; min-width: 0; border-right: 1px solid #31353b; overflow: hidden; }
+.feature-buttons { padding: 12px; border-bottom: 1px solid #31353b; }
+.feature-buttons h2 { margin-bottom: 10px; }
+.feature-buttons .tools { flex-wrap: wrap; background: transparent; border: 0; padding: 0; gap: 6px; }
+.feature-buttons .tools button { flex: 1 1 44%; padding: 8px; order: 0; }
+.feature-settings { flex: 1; min-height: 0; overflow: auto; scrollbar-width: none; }
+.feature-settings::-webkit-scrollbar { display: none; }
+.feature-settings .inspector { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; max-height: none; min-height: 0; border: 0; padding: 12px; gap: 12px; }
+.feature-settings .inspector[hidden] { display: none; }
+.feature-settings .inspector-title { flex-wrap: wrap; gap: 6px; }
+.feature-settings .effect-fields { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.feature-settings .effect-fields label { display: flex; justify-content: space-between; align-items: center; }
+.feature-settings .effect-fields input { width: 95px; }
+.feature-settings .effect-list { display: flex; flex-direction: column; align-items: stretch; }
+.feature-settings .timestamp-controls { display: flex; flex-direction: column; align-items: stretch; padding: 12px; }
+.timeline-panel > .timeline-heading { grid-column: 2; grid-row: 1; }
+.timeline-panel > .timeline-scroll { grid-column: 2; grid-row: 2; }
+.timeline-panel > .timeline-foot { grid-column: 2; grid-row: 3; }
+.source-feature, .source-feature.zoom-feature { background: transparent; cursor: pointer; }
+.source-draft.feature-selection { background: transparent; border-color: #b3c7df; box-shadow: none; }
+@media (max-width: 680px) { .timeline-panel { grid-template-columns: 160px minmax(0, 1fr); } .feature-buttons, .feature-settings .inspector { padding: 8px; } }
+
+.feature-outside { position: absolute; top: 0; height: 100%; background: #11182088; pointer-events: none; }

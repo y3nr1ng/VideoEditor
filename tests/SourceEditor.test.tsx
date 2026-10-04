@@ -211,3 +211,13 @@ it.each(["speed", "zoom"] as const)("adjusts %s selection with trim-style handle
   expect(change).not.toHaveBeenCalled();
   expect(screen.queryByRole("button", { name: /Trim start/ })).toBeNull();
 });
+it.each(["speed", "zoom"] as const)("selects an applied %s feature without changing or deleting it", (mode) => {
+  const select = vi.fn(), change = vi.fn();
+  const c = { ...clip, speeds: [{ id: "speed", start: 2, end: 6, rate: 2 }], zooms: [{ id: "zoom", start: 2, end: 6, from: 1, to: 2, x: 50, y: 50 }] };
+  const { container } = render(<SourceEditor {...props} mode={mode} clip={c} range={{ start: 2, end: 6 }} onSelectFeature={select} onChange={change} />);
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(`Select ${mode} feature`) }));
+  expect(select).toHaveBeenCalledWith(mode, mode);
+  expect(change).not.toHaveBeenCalled();
+  expect(container.querySelectorAll(".feature-outside")).toHaveLength(2);
+  expect(container.querySelector(".feature-selection")).toBeTruthy();
+});
