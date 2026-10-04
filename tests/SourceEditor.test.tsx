@@ -113,7 +113,7 @@ describe("source-context editor", () => {
       "8",
     );
   });
-  it.each(["speed", "zoom"] as const)(
+  it.each(["speed"] as const)(
     "hover deletion removes only the %s feature",
     (mode) => {
       const speed = { id: "s", start: 1, end: 2, rate: 2 },
@@ -190,34 +190,95 @@ describe("source-context editor", () => {
   });
 });
 
-it.each(["speed", "zoom"] as const)("adjusts %s selection with trim-style handles without trimming the clip", (mode) => {
-  const change = vi.fn();
-  function Harness() {
-    const [range, setRange] = useState({ start: 2, end: 8 });
-    return <SourceEditor {...props} mode={mode} clip={{ ...clip, in: 1, out: 9 }} range={range} onRange={setRange} onChange={change} />;
-  }
-  const { container } = render(<Harness />);
-  vi.spyOn(container.querySelector(".source-strip")!, "getBoundingClientRect").mockReturnValue({ left: 0, width: 1000 } as DOMRect);
-  const label = mode === "speed" ? "Speed" : "Zoom";
-  fireEvent.pointerDown(screen.getByLabelText(`${label} range start`), { clientX: 200 });
-  fireEvent.pointerMove(window, { clientX: 0 });
-  fireEvent.pointerUp(window);
-  const selection = container.querySelector(".source-draft") as HTMLElement;
-  expect(selection.style.left).toBe("10%");
-  fireEvent.pointerDown(screen.getByLabelText(`${label} range end`), { clientX: 800 });
-  fireEvent.pointerMove(window, { clientX: 1000 });
-  fireEvent.pointerUp(window);
-  expect(selection.style.width).toBe("80%");
-  expect(change).not.toHaveBeenCalled();
-  expect(screen.queryByRole("button", { name: /Trim start/ })).toBeNull();
-});
-it.each(["speed", "zoom"] as const)("selects an applied %s feature without changing or deleting it", (mode) => {
-  const select = vi.fn(), change = vi.fn();
-  const c = { ...clip, speeds: [{ id: "speed", start: 2, end: 6, rate: 2 }], zooms: [{ id: "zoom", start: 2, end: 6, from: 1, to: 2, x: 50, y: 50 }] };
-  const { container } = render(<SourceEditor {...props} mode={mode} clip={c} range={{ start: 2, end: 6 }} onSelectFeature={select} onChange={change} />);
-  fireEvent.click(screen.getByRole("button", { name: new RegExp(`Select ${mode} feature`) }));
-  expect(select).toHaveBeenCalledWith(mode, mode);
-  expect(change).not.toHaveBeenCalled();
-  expect(container.querySelectorAll(".feature-outside")).toHaveLength(2);
-  expect(container.querySelector(".feature-selection")).toBeTruthy();
+it.each(["speed"] as const)(
+  "adjusts %s selection with trim-style handles without trimming the clip",
+  (mode) => {
+    const change = vi.fn();
+    function Harness() {
+      const [range, setRange] = useState({ start: 2, end: 8 });
+      return (
+        <SourceEditor
+          {...props}
+          mode={mode}
+          clip={{ ...clip, in: 1, out: 9 }}
+          range={range}
+          onRange={setRange}
+          onChange={change}
+        />
+      );
+    }
+    const { container } = render(<Harness />);
+    vi.spyOn(
+      container.querySelector(".source-strip")!,
+      "getBoundingClientRect",
+    ).mockReturnValue({ left: 0, width: 1000 } as DOMRect);
+    const label = mode === "speed" ? "Speed" : "Zoom";
+    fireEvent.pointerDown(screen.getByLabelText(`${label} range start`), {
+      clientX: 200,
+    });
+    fireEvent.pointerMove(window, { clientX: 0 });
+    fireEvent.pointerUp(window);
+    const selection = container.querySelector(".source-draft") as HTMLElement;
+    expect(selection.style.left).toBe("10%");
+    fireEvent.pointerDown(screen.getByLabelText(`${label} range end`), {
+      clientX: 800,
+    });
+    fireEvent.pointerMove(window, { clientX: 1000 });
+    fireEvent.pointerUp(window);
+    expect(selection.style.width).toBe("80%");
+    expect(change).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /Trim start/ })).toBeNull();
+  },
+);
+it.each(["speed"] as const)(
+  "selects an applied %s feature without changing or deleting it",
+  (mode) => {
+    const select = vi.fn(),
+      change = vi.fn();
+    const c = {
+      ...clip,
+      speeds: [{ id: "speed", start: 2, end: 6, rate: 2 }],
+      zooms: [{ id: "zoom", start: 2, end: 6, from: 1, to: 2, x: 50, y: 50 }],
+    };
+    const { container } = render(
+      <SourceEditor
+        {...props}
+        mode={mode}
+        clip={c}
+        range={{ start: 2, end: 6 }}
+        onSelectFeature={select}
+        onChange={change}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: new RegExp(`Select ${mode} feature`),
+      }),
+    );
+    expect(select).toHaveBeenCalledWith(mode, mode);
+    expect(change).not.toHaveBeenCalled();
+    expect(container.querySelectorAll(".feature-outside")).toHaveLength(2);
+    expect(container.querySelector(".feature-selection")).toBeTruthy();
+  },
+);
+it("shows zoom keyframe markers, selects their settings, and removes one independently", () => {
+  const onSelectKey = vi.fn(),
+    onChange = vi.fn();
+  render(
+    <SourceEditor
+      {...props}
+      mode="zoom"
+      clip={{
+        ...clip,
+        zoomKeys: [{ id: "k", time: 3, scale: 2, x: 50, y: 50 }],
+      }}
+      onSelectKey={onSelectKey}
+      onChange={onChange}
+    />,
+  );
+  expect(screen.queryByLabelText("Zoom range start")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /Select zoom keyframe/ }));
+  expect(onSelectKey).toHaveBeenCalledWith("k");
+  fireEvent.click(screen.getByRole("button", { name: /Delete zoom keyframe/ }));
+  expect(onChange.mock.calls[0][0].zoomKeys).toEqual([]);
 });

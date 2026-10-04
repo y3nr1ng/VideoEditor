@@ -1,3 +1,4 @@
+import { keyframeView } from "./keyframes";
 export type Crop = { x: number; y: number; w: number; h: number };
 export type Resource = {
   id: string;
@@ -22,6 +23,13 @@ export type Zoom = {
   x: number;
   y: number;
 };
+export type ZoomKeyframe = {
+  id: string;
+  time: number;
+  scale: number;
+  x: number;
+  y: number;
+};
 export type KeepRange = { id: string; start: number; end: number };
 export type Clip = {
   id: string;
@@ -32,6 +40,7 @@ export type Clip = {
   ranges?: KeepRange[];
   speeds: Speed[];
   zooms: Zoom[];
+  zoomKeys?: ZoomKeyframe[];
 };
 export const uid = () => crypto.randomUUID();
 export const clamp = (v: number, min: number, max: number) =>
@@ -135,6 +144,7 @@ export function outputAt(c: Clip, t: number) {
   );
 }
 export function zoomAt(c: Clip, t: number) {
+  if (c.zoomKeys?.length) return keyframeView(c.zoomKeys, t);
   const z = c.zooms.find((z) => t >= z.start && t <= z.end);
   return z
     ? {

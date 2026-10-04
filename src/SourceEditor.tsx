@@ -20,6 +20,7 @@ import {
   clamp,
   time,
   uid,
+  zoomAt,
 } from "./model";
 import { HoverDelete } from "./HoverDelete";
 type Props = {
@@ -30,6 +31,8 @@ type Props = {
   range: { start: number; end: number };
   onRange: (range: { start: number; end: number }) => void;
   onChange: (clip: Clip) => void;
+  selectedKeyId?: string | null;
+  onSelectKey?: (id: string) => void;
   onSelectFeature?: (mode: "speed" | "zoom", id: string) => void;
   onSeek: (time: number) => void;
 };
@@ -43,6 +46,8 @@ export function SourceEditor({
   onChange,
   onSeek,
   onSelectFeature,
+  selectedKeyId,
+  onSelectKey,
 }: Props) {
   const ranges = keptRanges(clip);
   const [activeId, setActiveId] = useState(ranges[0].id),
@@ -93,12 +98,16 @@ export function SourceEditor({
     window.addEventListener("pointercancel", end);
   }
   function adjustEffect(edge: "start" | "end", value: number) {
-    const retained = ranges.find((r) => range.start >= r.start && range.end <= r.end);
+    const retained = ranges.find(
+      (r) => range.start >= r.start && range.end <= r.end,
+    );
     const lower = retained?.start ?? 0;
     const upper = retained?.end ?? resource.duration;
-    onRange(edge === "start"
-      ? { ...range, start: clamp(value, lower, range.end - 0.1) }
-      : { ...range, end: clamp(value, range.start + 0.1, upper) });
+    onRange(
+      edge === "start"
+        ? { ...range, start: clamp(value, lower, range.end - 0.1) }
+        : { ...range, end: clamp(value, range.start + 0.1, upper) },
+    );
   }
   function selectRange(id: string) {
     const r = ranges.find((r) => r.id === id)!;
@@ -134,17 +143,35 @@ export function SourceEditor({
               ? "Select speed range"
               : resource.kind === "audio"
                 ? "Zoom unavailable for audio"
-                : "Select zoom range"}
+                : "Zoom keyframes"}
         </span>
       </div>
       <div className="source-viewport">
         <div
           ref={strip}
           className="source-strip"
+          onDoubleClick={(e) => {
+            if (disabled || mode !== "zoom" || resource.kind !== "video")
+              return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const t = clamp(
+              ((e.clientX - rect.left) / rect.width) * resource.duration,
+              0,
+              resource.duration,
+            );
+            if (
+              !ranges.some((r) => t >= r.start && t <= r.end) ||
+              clip.zoomKeys?.some((k) => Math.abs(k.time - t) < 0.001)
+            )
+              return;
+            const key = { id: uid(), time: t, ...zoomAt(clip, t) };
+            onChange({ ...clip, zoomKeys: [...(clip.zoomKeys ?? []), key] });
+            onSelectKey?.(key.id);
+            onSeek(t);
+          }}
           style={{ left: `${left}%`, width: `${width}%` }}
           onPointerDown={(e) => {
-            if (disabled || (mode === "zoom" && resource.kind === "audio"))
-              return;
+            if (disabled || mode === "zoom") return;
             const rect = e.currentTarget.getBoundingClientRect();
             const start = clamp(
               ((e.clientX - rect.left) / rect.width) * resource.duration,
@@ -322,11 +349,19 @@ export function SourceEditor({
               <div
                 key={effect.id}
                 className="source-feature speed-feature"
-                role="button" tabIndex={disabled ? -1 : 0}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
                 aria-label={`Select speed feature ${time(effect.start)}–${time(effect.end)}`}
                 onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => !disabled && onSelectFeature?.("speed", effect.id)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!disabled) onSelectFeature?.("speed", effect.id); } }}
+                onClick={() =>
+                  !disabled && onSelectFeature?.("speed", effect.id)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (!disabled) onSelectFeature?.("speed", effect.id);
+                  }
+                }}
                 style={{
                   left: `${(effect.start / resource.duration) * 100}%`,
                   width: `${((effect.end - effect.start) / resource.duration) * 100}%`,
@@ -346,56 +381,103 @@ export function SourceEditor({
               </div>
             ))}
           {mode === "zoom" &&
-            clip.zooms.map((effect) => (
+            resource.kind === "video" &&
+            (clip.zoomKeys ?? []).map((key) => (
               <div
-                key={effect.id}
-                className="source-feature zoom-feature"
-                role="button" tabIndex={disabled ? -1 : 0}
-                aria-label={`Select zoom feature ${time(effect.start)}–${time(effect.end)}`}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => !disabled && onSelectFeature?.("zoom", effect.id)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!disabled) onSelectFeature?.("zoom", effect.id); } }}
-                style={{
-                  left: `${(effect.start / resource.duration) * 100}%`,
-                  width: `${((effect.end - effect.start) / resource.duration) * 100}%`,
-                }}
+                className={
+                  "source-zoom-key " +
+                  (key.id === selectedKeyId ? "active" : "")
+                }
+                key={key.id}
+                style={{ left: `${(key.time / resource.duration) * 100}%` }}
               >
-                <span className="source-feature-label">
-                  {effect.from}→{effect.to}×
-                </span>
+                <button
+                  title={time(key.time)}
+                  aria-label={`Select zoom keyframe ${time(key.time)}`}
+                  disabled={disabled}
+                  onPointerDown={(e) => {
+                    onSelectKey?.(key.id);
+                    drag(e, (value) => {
+                      if (
+                        !ranges.some(
+                          (r) => value >= r.start && value <= r.end,
+                        ) ||
+                        clip.zoomKeys?.some(
+                          (k) =>
+                            k.id !== key.id && Math.abs(k.time - value) < 0.001,
+                        )
+                      )
+                        return;
+                      onChange({
+                        ...clip,
+                        zoomKeys: clip.zoomKeys?.map((k) =>
+                          k.id === key.id ? { ...k, time: value } : k,
+                        ),
+                      });
+                      onSeek(value);
+                    });
+                  }}
+                  onClick={() => {
+                    onSelectKey?.(key.id);
+                    onSeek(key.time);
+                  }}
+                >
+                  ◆
+                </button>
                 <HoverDelete
-                  label={`Remove zoom effect ${time(effect.start)}–${time(effect.end)}`}
+                  label={`Delete zoom keyframe ${time(key.time)}`}
                   disabled={disabled}
                   onDelete={() =>
                     onChange({
                       ...clip,
-                      zooms: clip.zooms.filter((z) => z.id !== effect.id),
+                      zoomKeys: clip.zoomKeys?.filter((k) => k.id !== key.id),
                     })
                   }
                 />
               </div>
             ))}
-          {mode !== "trim" && selection && selection.end > selection.start && !(mode === "zoom" && resource.kind === "audio") && <>
-            <div className="feature-outside" style={{ left: 0, width: `${(selection.start / resource.duration) * 100}%` }} />
-            <div className="feature-outside" style={{ left: `${(selection.end / resource.duration) * 100}%`, right: 0 }} />
-          </>}
-          {selection && selection.end > selection.start && !(mode === "zoom" && resource.kind === "audio") && (
+          {mode === "speed" && selection && selection.end > selection.start && (
+            <>
+              <div
+                className="feature-outside"
+                style={{
+                  left: 0,
+                  width: `${(selection.start / resource.duration) * 100}%`,
+                }}
+              />
+              <div
+                className="feature-outside"
+                style={{
+                  left: `${(selection.end / resource.duration) * 100}%`,
+                  right: 0,
+                }}
+              />
+            </>
+          )}
+          {mode !== "zoom" && selection && selection.end > selection.start && (
             <div
-              className={"source-draft " + (mode !== "trim" ? "feature-selection" : "")}
+              className={
+                "source-draft " + (mode !== "trim" ? "feature-selection" : "")
+              }
               style={{
                 left: `${(selection.start / resource.duration) * 100}%`,
                 width: `${((selection.end - selection.start) / resource.duration) * 100}%`,
               }}
             >
-              {mode !== "trim" && (["start", "end"] as const).map((edge) => (
-                <button key={edge}
-                  aria-label={`${mode === "speed" ? "Speed" : "Zoom"} range ${edge}`}
-                  className={`source-handle ${edge === "start" ? "left" : "right"}`}
-                  disabled={disabled}
-                  onPointerDown={(e) => drag(e, (value) => adjustEffect(edge, value))}>
-                  <IconGripVertical size={14} />
-                </button>
-              ))}
+              {mode !== "trim" &&
+                (["start", "end"] as const).map((edge) => (
+                  <button
+                    key={edge}
+                    aria-label={`${mode === "speed" ? "Speed" : "Zoom"} range ${edge}`}
+                    className={`source-handle ${edge === "start" ? "left" : "right"}`}
+                    disabled={disabled}
+                    onPointerDown={(e) =>
+                      drag(e, (value) => adjustEffect(edge, value))
+                    }
+                  >
+                    <IconGripVertical size={14} />
+                  </button>
+                ))}
             </div>
           )}
           <div className="source-ticks">
@@ -521,7 +603,9 @@ export function SourceEditor({
           <span>
             {mode === "zoom" && resource.kind === "audio"
               ? "Select a video segment for zoom."
-              : "Drag the range edges, then apply the settings below."}
+              : mode === "zoom"
+                ? "Select a keyframe to edit its view."
+                : "Drag the range edges, then apply the settings below."}
           </span>
         </div>
       )}
