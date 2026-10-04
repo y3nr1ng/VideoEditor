@@ -4,8 +4,6 @@ import {
   IconCut,
   IconPlus,
   IconUpload,
-  IconPlayerPlay,
-  IconPlayerPause,
   IconPlayerTrackPrev,
   IconPlayerTrackNext,
   IconPlayerSkipBack,
@@ -908,7 +906,6 @@ function App() {
               )}
             </div>
             <div className="preview-actions">
-              <span className="preview-ratio">16:9</span>
               <button
                 className="icon-button"
                 aria-label="Editor information"
@@ -957,7 +954,7 @@ function App() {
                     {previewRes?.kind === "audio" ? (
                       <IconMusic size={30} />
                     ) : (
-                      <IconPlayerPlay size={30} />
+                      <IconMovie size={30} />
                     )}
                   </div>
                   {previewRes?.kind === "audio" && (
@@ -1001,18 +998,6 @@ function App() {
                 }}
               >
                 <IconPlayerTrackPrev size={17} />
-              </button>
-              <button
-                className="play-button"
-                aria-label={playing ? "Pause" : "Play"}
-                onClick={togglePlay}
-                disabled={!total}
-              >
-                {playing ? (
-                  <IconPlayerPause size={21} />
-                ) : (
-                  <IconPlayerPlay size={21} />
-                )}
               </button>
               <button
                 aria-label="Next segment start"

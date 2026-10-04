@@ -47,3 +47,4 @@
 - Do not repeat the selected resource filename in the left feature settings panel; the source row already identifies it.
 - Omit the media library header Import button; keep view controls, file drops, and the clickable empty-library file picker.
 - Omit the bottom Space play/pause hint; keep the keyboard shortcut available.
+- Preview fills its available content area without padding/margins or an inner frame border. Omit the top 16:9 badge and preview play button; keyboard playback remains available.
